@@ -6,7 +6,7 @@
  * This software is
  * Copyright (c) 2010-2012 Samuele Giovanni Tonon <samu at linuxasylum dot net>
  * Copyright (c) 2010-2013 Lukas Odzioba <ukasz@openwall.net>
- * Copyright (c) 2010-2019 magnum
+ * Copyright (c) 2010-2022 magnum
  * Copyright (c) 2012-2015 Claudio André <claudioandre.br at gmail.com>
  *
  * and is hereby released to the general public under the following terms:
@@ -1279,6 +1279,8 @@ void opencl_build(int sequential_id, const char *opts, int save, const char *fil
 
 	uint64_t end = john_get_nano();
 	log_event("- build time: %ss", ns2string(end - start));
+	if (options.verbosity >= VERB_MAX)
+		fprintf(stderr, "Build time: %ss\n", ns2string(end - start));
 
 	// Report build errors and warnings
 	if (build_code != CL_SUCCESS) {
@@ -1394,6 +1396,8 @@ cl_int opencl_build_from_binary(int sequential_id, cl_program *program, const ch
 		fprintf(stderr, "Binary Build log: %s\n", build_log);
 
 	log_event("- build time: %ss", ns2string(end - start));
+	if (options.verbosity >= VERB_MAX)
+		fprintf(stderr, "Build time: %ss\n", ns2string(end - start));
 	MEM_FREE(build_log);
 	return CL_SUCCESS;
 }
