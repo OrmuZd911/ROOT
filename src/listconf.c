@@ -100,6 +100,10 @@ extern char CPU_req_name[];
 
 #define SINGLE_MAX_WORDS(len) MIN(SINGLE_IDX_MAX, SINGLE_BUF_MAX / len + 1)
 
+#ifdef __CYGWIN__
+#include <sys/utsname.h>
+#endif
+
 /*
  * FIXME: Should all the listconf_list_*() functions get an additional stream
  * parameter, so that they can write to stderr instead of stdout in case fo an
@@ -344,6 +348,17 @@ static void listconf_list_build_info(void)
 
 	printf("Terminal locale string: %s\n", john_terminal_locale);
 	printf("Parsed terminal locale: %s\n", cp_id2name(options.terminal_enc));
+
+#ifdef __CYGWIN__
+	{
+		struct utsname buffer;
+
+		if (uname(&buffer) < 0)
+			printf("Cygwin version detection error\n");
+		else
+			printf("Cygwin version: %s, %s\n", buffer.release, buffer.version);
+	}
+#endif
 
 // OK, now append debugging options, BUT only output  something if
 // one or more of them is set. IF none set, be silent.
