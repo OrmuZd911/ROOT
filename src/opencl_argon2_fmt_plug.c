@@ -478,7 +478,11 @@ static void reset(struct db_main *db)
 	// Select mode of operation
 	uint32_t sm_version;
 	get_compute_capability(gpu_id, &sm_version, NULL);
+#ifdef __APPLE__
+	DEVICE_USE_LOCAL_MEMORY = 1;
+#else
 	DEVICE_USE_LOCAL_MEMORY = !(gpu_nvidia(device_info[gpu_id]) && sm_version >= 3);
+#endif
 
 	// Find [max/min]_lanes and max_memory_size
 	max_salt_lanes = 0;
