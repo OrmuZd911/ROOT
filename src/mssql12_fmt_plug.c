@@ -119,11 +119,20 @@ static int valid(char *ciphertext, struct fmt_main *self)
 		return 0;
 	for (i = 6; i < CIPHERTEXT_LENGTH; i++) {
 		if (!((('0' <= ciphertext[i])&&(ciphertext[i] <= '9')) ||
-		      //(('a' <= ciphertext[i])&&(ciphertext[i] <= 'f')) ||
+		      (('a' <= ciphertext[i])&&(ciphertext[i] <= 'f')) ||
 		      (('A' <= ciphertext[i])&&(ciphertext[i] <= 'F'))))
 			return 0;
 	}
 	return 1;
+}
+
+static char *split(char *ciphertext, int index, struct fmt_main *self)
+{
+	static char out[CIPHERTEXT_LENGTH + 1];
+
+	strnzcpy(out, ciphertext, sizeof(out));
+	strupr(out + 6); /* Skip first 6 chars to retain lowercase 'x' */
+	return out;
 }
 
 static void set_salt(void *salt)
@@ -433,7 +442,7 @@ struct fmt_main fmt_mssql12 = {
 		SALT_ALIGN,
 		MIN_KEYS_PER_CRYPT,
 		MAX_KEYS_PER_CRYPT,
-		FMT_CASE | FMT_8_BIT | FMT_UNICODE | FMT_ENC | FMT_OMP,
+		FMT_CASE | FMT_8_BIT | FMT_SPLIT_UNIFIES_CASE | FMT_UNICODE | FMT_ENC | FMT_OMP,
 		{ NULL },
 		{ NULL },
 		tests
@@ -443,7 +452,7 @@ struct fmt_main fmt_mssql12 = {
 		fmt_default_reset,
 		fmt_default_prepare,
 		valid,
-		fmt_default_split,
+		split,
 		get_binary,
 		get_salt,
 		{ NULL },
