@@ -101,13 +101,23 @@ static int ishexdigit(char c) {
 		return 1;
 	return 0;
 }
-// Only called at load time, so does not have to be overly optimal
+
+// Was only called at load time, so did not have to be overly optimal and could
+// leak memory.
+// Now is also called as fallback by the RDP dynamic compiler format, so should
+// avoid leaking memory, but in non-trivial cases still does.
 char *dynamic_Demangle(char *Line, int *Len)
 {
 	char *tmp, *cp, *cp2, digits[3];
-	if (!Line || !strlen(Line)) {
-		if (Len) *Len = 0;
-		return str_alloc_copy("");
+	if (!Line) {
+		if (Len)
+			*Len = 0;
+		return "";
+	}
+	if (!strchr(Line, '\\')) {
+		if (Len)
+			*Len = strlen(Line);
+		return Line;
 	}
 	tmp = str_alloc_copy(Line);
 	cp = tmp;
