@@ -61,13 +61,9 @@
 
 #define LOG_SIZE 1024*16
 
-// If we are a release build, only output OpenCL build log if
-// there was a fatal error (or --verbosity was increased).
-#ifdef JTR_RELEASE_BUILD
+/* Only output OpenCL build log if there was a fatal error
+ * (or --verbosity was increased). */
 #define LOG_VERB VERB_LEGACY
-#else
-#define LOG_VERB VERB_DEFAULT
-#endif
 
 /* Common OpenCL variables */
 int platform_id;
