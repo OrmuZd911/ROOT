@@ -30,9 +30,7 @@
 
 /*
  * Define this for release tarballs. It affects the version reporting (will
- * be the string above and below and never a Git hash) as well as some other
- * details. Eg. it mutes output of OpenCL run-time build log unless the build
- * failed.
+ * be the string above and below and never a Git hash).
  */
 //#define JTR_RELEASE_BUILD 1
 
