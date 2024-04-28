@@ -993,7 +993,7 @@ static void scan_central_index(const char *fname)
 	uint32_t this_disk, cd_start_disk;
 	uint64_t num_records, num_records_total;
 	uint64_t cd_size, cd_start_offset;
-	zip_context ctx;
+	zip_context ctx = {};
 
 	if (!(fp = fopen(fname, "rb"))) {
 		fprintf(stderr, "! %s : %s\n", fname, strerror(errno));
