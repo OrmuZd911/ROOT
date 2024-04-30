@@ -206,6 +206,9 @@ char *fgetll(char *s, size_t size, FILE *stream)
 		void *new_cp;
 
 		new_cp = realloc(cp, len + increase);
+		/* Reference the relocated pointer to avoid GCC -Wuse-after-free */
+		if (new_cp)
+			cp = new_cp;
 
 		while (!new_cp) {
 			increase >>= 2;
@@ -217,6 +220,7 @@ char *fgetll(char *s, size_t size, FILE *stream)
 				cp = new_cp;
 		}
 
+		/* This became redundant after GCC warning workarounds above */
 		cp = new_cp;
 
 		/* We get an EOF if there is no trailing \n on the last line */
