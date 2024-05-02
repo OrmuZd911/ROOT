@@ -482,22 +482,14 @@ static int process_aes(zip_file *zip, zip_ptr *p)
 		// continue;
 		unsigned char iv[16];
 		unsigned char Erd[256];
-		uint32_t Size;
 		uint32_t Format;
 		uint16_t AlgId;
 		uint16_t Bitlen;
-		uint16_t Flags;
 		uint16_t ErdSize;
 		uint32_t Reserved1;
 		uint16_t VSize;
 		uint16_t IVSize;
 		char *bname;
-
-		// unused
-		(void) Flags;
-		(void) Bitlen;
-		(void) Reserved1;
-		(void) Size;
 
 		fprintf(stderr, "Poking at %s in %s to see if it's indeed strong encryption...\n", p->file_name, zip->fname);
 		bname = jtr_basename(zip->fname);
@@ -510,7 +502,7 @@ static int process_aes(zip_file *zip, zip_ptr *p)
 			fprintf(stderr, "No (Error reading IV)\n");
 			return 0;
 		}
-		Size = fget32LE(fp);
+		(void) fget32LE(fp); /* Size */
 		Format = fget16LE(fp);
 		if (Format != 3) {
 			fprintf(stderr, "No (Format == %"PRIu32")\n", Format);
@@ -542,7 +534,7 @@ static int process_aes(zip_file *zip, zip_ptr *p)
 			IVSize = 12;
 		}
 		Bitlen = fget16LE(fp);
-		Flags = fget16LE(fp);
+		(void) fget16LE(fp); /* Flags */
 		ErdSize = fget16LE(fp);
 		if (ErdSize > sizeof(Erd)) {
 			fprintf(stderr, "No (ErdSize too large: %"PRIu16")\n", ErdSize);
