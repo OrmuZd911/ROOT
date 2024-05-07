@@ -90,9 +90,10 @@ unsigned int diskcryptor_iteration_count(void *salt)
 
 int diskcryptor_decrypt_data(unsigned char *key, struct custom_salt *cur_salt)
 {
-	const int len = 96; /* up to 2048 */
+/* up to 2048 */
+#define LEN 96
 	union {
-		unsigned char uc[len];
+		unsigned char uc[LEN];
 		struct dc_header header;
 	} out;
 	int algorithm;
@@ -101,7 +102,7 @@ int diskcryptor_decrypt_data(unsigned char *key, struct custom_salt *cur_salt)
 		unsigned char tweak[16] = { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
 		// Note: header.reserved is actually all zeroes but isn't for us because our XTS code is wonky?
-		XTS_decrypt_custom_tweak(key, tweak, out.uc, cur_salt->header, len, 256, algorithm);
+		XTS_decrypt_custom_tweak(key, tweak, out.uc, cur_salt->header, LEN, 256, algorithm);
 #if ARCH_LITTLE_ENDIAN==0
 		out.header.alg_1 = JOHNSWAP(out.header.alg_1);
 		out.header.version = (out.header.version >> 8) | (out.header.version << 8);
@@ -113,4 +114,5 @@ int diskcryptor_decrypt_data(unsigned char *key, struct custom_salt *cur_salt)
 	}
 
 	return 0;
+#undef LEN
 }
