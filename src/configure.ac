@@ -1300,7 +1300,16 @@ Fuzzing test ....................................... ${fuzz}
 EOF
 fi
 
+dnl Try to figure out number of cpu cores for make -j suggestion
+AS_IF([test -z "$NPROC"], [AC_CHECK_TOOL([NPROC], [nproc], [""])])
+if test -z "$NPROC"; then
+   dnl default to 4
+   NUM_CORES=4
+else
+   NUM_CORES=$(${NPROC})
+fi
+
 echo "Install missing libraries to get any needed features that were omitted."
 echo ""
-echo "Configure finished.  Now \"${use_make} -s clean && ${use_make} -sj4\" to compile."
+echo "Configure finished.  Now \"${use_make} -s clean && ${use_make} -sj${NUM_CORES}\" to compile."
 dnl ======================================================================
