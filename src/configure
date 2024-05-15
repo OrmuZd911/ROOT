@@ -18048,6 +18048,117 @@ Fuzzing test ....................................... ${fuzz}
 EOF
 fi
 
+if test -z "$NPROC"
+then :
+  if test -n "$ac_tool_prefix"; then
+  # Extract the first word of "${ac_tool_prefix}nproc", so it can be a program name with args.
+set dummy ${ac_tool_prefix}nproc; ac_word=$2
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+printf %s "checking for $ac_word... " >&6; }
+if test ${ac_cv_prog_NPROC+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  if test -n "$NPROC"; then
+  ac_cv_prog_NPROC="$NPROC" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  case $as_dir in #(((
+    '') as_dir=./ ;;
+    */) ;;
+    *) as_dir=$as_dir/ ;;
+  esac
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir$ac_word$ac_exec_ext"; then
+    ac_cv_prog_NPROC="${ac_tool_prefix}nproc"
+    printf "%s\n" "$as_me:${as_lineno-$LINENO}: found $as_dir$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+NPROC=$ac_cv_prog_NPROC
+if test -n "$NPROC"; then
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $NPROC" >&5
+printf "%s\n" "$NPROC" >&6; }
+else
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+fi
+
+
+fi
+if test -z "$ac_cv_prog_NPROC"; then
+  ac_ct_NPROC=$NPROC
+  # Extract the first word of "nproc", so it can be a program name with args.
+set dummy nproc; ac_word=$2
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+printf %s "checking for $ac_word... " >&6; }
+if test ${ac_cv_prog_ac_ct_NPROC+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  if test -n "$ac_ct_NPROC"; then
+  ac_cv_prog_ac_ct_NPROC="$ac_ct_NPROC" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  case $as_dir in #(((
+    '') as_dir=./ ;;
+    */) ;;
+    *) as_dir=$as_dir/ ;;
+  esac
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir$ac_word$ac_exec_ext"; then
+    ac_cv_prog_ac_ct_NPROC="nproc"
+    printf "%s\n" "$as_me:${as_lineno-$LINENO}: found $as_dir$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+ac_ct_NPROC=$ac_cv_prog_ac_ct_NPROC
+if test -n "$ac_ct_NPROC"; then
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_ct_NPROC" >&5
+printf "%s\n" "$ac_ct_NPROC" >&6; }
+else
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+fi
+
+  if test "x$ac_ct_NPROC" = x; then
+    NPROC=""""
+  else
+    case $cross_compiling:$ac_tool_warned in
+yes:)
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: using cross tools not prefixed with host triplet" >&5
+printf "%s\n" "$as_me: WARNING: using cross tools not prefixed with host triplet" >&2;}
+ac_tool_warned=yes ;;
+esac
+    NPROC=$ac_ct_NPROC
+  fi
+else
+  NPROC="$ac_cv_prog_NPROC"
+fi
+
+fi
+if test -z "$NPROC"; then
+      NUM_CORES=4
+else
+   NUM_CORES=$(${NPROC})
+fi
+
 echo "Install missing libraries to get any needed features that were omitted."
 echo ""
-echo "Configure finished.  Now \"${use_make} -s clean && ${use_make} -sj4\" to compile."
+echo "Configure finished.  Now \"${use_make} -s clean && ${use_make} -sj${NUM_CORES}\" to compile."
