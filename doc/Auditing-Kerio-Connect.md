@@ -41,7 +41,7 @@ The following script can be used to reverse these "D3S" scrambled password strin
 #!/usr/bin/env python
 
 import sys
-from Crypto.Cipher import DES3  # pip install --user pycrypto
+from Crypto.Cipher import DES3  # pip install --user pycryptodome
 
 # Password unscrambler for Kerio Connect.
 #
@@ -180,7 +180,7 @@ follows,
 #!/usr/bin/env python
 
 import sys
-from Crypto.Cipher import DES  # pip install --user pycrypto
+from Crypto.Cipher import DES  # pip install --user pycryptodome
 
 # Password unscrambler for Kerio Connect.
 

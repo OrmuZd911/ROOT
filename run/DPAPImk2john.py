@@ -30,7 +30,7 @@ try:
     from Crypto.Cipher import DES
     from Crypto.Cipher import DES3
 except ImportError:
-    sys.stderr.write("Error: Please install PyCrypto package.\n")
+    sys.stderr.write("pycryptodome python package is missing, please install it using 'pip install --user pycryptodome' command.\n")
     sys.exit(1)
 
 debug = False
