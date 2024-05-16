@@ -1980,23 +1980,23 @@ static int process_ng(FILE *in)
 				pcapngpb.len		= swap32u(pcapngpb.len);
 			}
 
-			if ((pcapngepb.timestamp_high == 0) &&
-			    (pcapngepb.timestamp_low == 0) && !warn_wpaclean++)
+			if ((pcapngpb.timestamp_high == 0) &&
+			    (pcapngpb.timestamp_low == 0) && !warn_wpaclean++)
 				fprintf(stderr,
 "**\n** Warning: %s seems to be processed with some dubious tool like\n"
 "** 'wpaclean'. Important information may be lost.\n**\n", filename);
 
 			MEM_FREE(full_packet);
-			safe_malloc(full_packet, pcapngepb.caplen);
+			safe_malloc(full_packet, pcapngpb.caplen);
 			res = fread(full_packet, 1, pcapngpb.caplen, in);
 			if (res != pcapngpb.caplen) {
 				printf("failed to read packet: %s truncated?\n", filename);
 				break;
 			}
-			fseek(in, pcapngbh.total_length - BH_SIZE - PB_SIZE - pcapngepb.caplen, SEEK_CUR);
+			fseek(in, pcapngbh.total_length - BH_SIZE - PB_SIZE - pcapngpb.caplen, SEEK_CUR);
 
 			MEM_FREE(full_packet);
-			safe_malloc(full_packet, pcapngepb.caplen);
+			safe_malloc(full_packet, pcapngpb.caplen);
 			res = fread(full_packet, 1, pcapngpb.caplen, in);
 			if (res != pcapngpb.caplen) {
 				printf("failed to read packet: %s truncated?\n", filename);
