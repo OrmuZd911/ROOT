@@ -293,6 +293,7 @@ static void aes_gcm_ghash(const uint8_t *H, const uint8_t *aad, size_t aad_len,
 }
 
 
+#if 0
 /**
  * aes_gcm_ae - GCM-AE_K(IV, P, A)
  */
@@ -324,6 +325,7 @@ int aes_gcm_ae(const uint8_t *key, size_t key_len, const uint8_t *iv, size_t iv_
 
 	return 0;
 }
+#endif
 
 
 /**
@@ -361,12 +363,14 @@ int aes_gcm_ad(const uint8_t *key, size_t key_len, const uint8_t *iv, size_t iv_
 }
 
 
+#if 0
 int aes_gmac(const uint8_t *key, size_t key_len, const uint8_t *iv, size_t iv_len,
 	     const uint8_t *aad, size_t aad_len, uint8_t *tag)
 {
 	return aes_gcm_ae(key, key_len, iv, iv_len, NULL, 0, aad, aad_len, NULL,
 			  tag);
 }
+#endif
 
 
 #ifdef TEST

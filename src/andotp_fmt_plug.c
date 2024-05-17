@@ -167,7 +167,8 @@ static int check_password(int index, struct custom_salt *cs)
 	SHA256_Update(&ctx, saved_key[index], saved_len[index]);
 	SHA256_Final(key, &ctx);
 
-	ret = aes_gcm_ad(key, 32, cs->iv, IVLEN, cs->ciphertext, cs->ctlen, NULL, 0, cur_salt->tag, NULL, 1);
+	void *empty = &empty; /* Could be NULL, but we'd end up with NULL+0, which is UB */
+	ret = aes_gcm_ad(key, 32, cs->iv, IVLEN, cs->ciphertext, cs->ctlen, empty, 0, cur_salt->tag, empty, 1);
 
 	if (!ret)
 		return 1;
