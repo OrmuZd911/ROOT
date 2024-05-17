@@ -330,7 +330,6 @@ static int crypt_all(int *pcount, struct db_salt *salt)
 		char mac1[32] = { 0 };
 		char t1[32] = { 0 };
 		unsigned char key[32];
-		unsigned char *key_p = key;
 		unsigned char m[MAX_SALT_SIZE + HASH_OUTPUT_SIZE + 32];
 		unsigned char *t1f = mem_alloc(HASH_OUTPUT_SIZE * cur_salt->mfact);
 		unsigned char *h_out = (unsigned char*)crypt_out[index];
@@ -340,7 +339,7 @@ static int crypt_all(int *pcount, struct db_salt *salt)
 		unsigned char dh[8];
 
 		ml = cur_salt->length;
-		memset(key_p, 0, sizeof(key));
+		memset(key, 0, sizeof(key));
 		memcpy(m, cur_salt->salt, ml);
 
 		// get des hash
@@ -369,25 +368,22 @@ static int crypt_all(int *pcount, struct db_salt *salt)
 		memcpy(key, t1, 32);
 
 		for (n = 0; n < cur_salt->mfact; n++) {
-			n_key =(((key_p[28]<<24) & 0xff000000) +
-					((key_p[29]<<16) & 0xff0000) +
-					((key_p[30]<<8)  & 0xff00)  +
-					(key_p[31] & 0xff)) & (cur_salt->mfact-1);
+			n_key = (((uint32_t)key[30] << 8) | key[31]) & (cur_salt->mfact - 1);
 			memcpy(m, t1f + (n_key * HASH_OUTPUT_SIZE), HASH_OUTPUT_SIZE);
 			memcpy(m + HASH_OUTPUT_SIZE, "\x00\x00\x00\x01", 4);
-			JTR_hmac_sha256(key_p, HASH_OUTPUT_SIZE, m, HASH_OUTPUT_SIZE + 4, h_out, HASH_OUTPUT_SIZE);
+			JTR_hmac_sha256(key, HASH_OUTPUT_SIZE, m, HASH_OUTPUT_SIZE + 4, h_out, HASH_OUTPUT_SIZE);
 			memcpy(t1f + (n*HASH_OUTPUT_SIZE), h_out, HASH_OUTPUT_SIZE);
 			memcpy(key, h_out, HASH_OUTPUT_SIZE);
 		}
 
 		memcpy(t1f + (HASH_OUTPUT_SIZE * (cur_salt->mfact-1)), "\x00\x00\x00\x01", 4);
 		ml = (HASH_OUTPUT_SIZE * (cur_salt->mfact-1))+4;
-		JTR_hmac_sha256(key_p, HASH_OUTPUT_SIZE, t1f, ml, h_out, HASH_OUTPUT_SIZE);
+		JTR_hmac_sha256(key, HASH_OUTPUT_SIZE, t1f, ml, h_out, HASH_OUTPUT_SIZE);
 
 		ml = 32;
 		memcpy(t1, h_out, HASH_OUTPUT_SIZE);
 		for (x = 0; x < (cur_salt->rfact*100)-1; x++) {
-			JTR_hmac_sha256(key_p, HASH_OUTPUT_SIZE, h_out, ml, h_out, HASH_OUTPUT_SIZE);
+			JTR_hmac_sha256(key, HASH_OUTPUT_SIZE, h_out, ml, h_out, HASH_OUTPUT_SIZE);
 			for (i = 0; i < HASH_OUTPUT_SIZE; i++)
 				t1[i] ^= h_out[i];
 		}
