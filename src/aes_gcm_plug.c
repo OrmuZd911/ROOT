@@ -8,7 +8,7 @@
  * See https://w1.fi/hostapd/ for more information.
  *
  * For self-test use the following command,
- * gcc -DTEST -I/usr/local/opt/openssl/include -L/usr/local/opt/openssl/lib aes_gcm_plug.c -lcrypt
+ * gcc -DTEST aes_gcm_plug.c aes/aes.a -lcrypt -O2 -Wall -W -fstack-protector-all -fsanitize=address -o aes_gcm_plug-test
  */
 
 #include <stdio.h>
@@ -293,7 +293,7 @@ static void aes_gcm_ghash(const uint8_t *H, const uint8_t *aad, size_t aad_len,
 }
 
 
-#if 0
+#ifdef TEST
 /**
  * aes_gcm_ae - GCM-AE_K(IV, P, A)
  */
@@ -408,17 +408,26 @@ static const unsigned char gcm_tag[] = {
 };
 
 
-int main()
+int main(void)
 {
 	unsigned char tag[16];
-	unsigned char crypt[32];
+	unsigned char crypt[16];
+	unsigned char plain[16];
+	int retval;
 
-	aes_gcm_ae(gcm_key, 32, gcm_iv, 12, gcm_pt, 16, gcm_aad, 16, crypt, tag);
+	retval = aes_gcm_ae(gcm_key, 32, gcm_iv, 12, gcm_pt, 16, gcm_aad, 16, crypt, tag);
 
-	if (!memcmp(tag, gcm_tag, 16)) {
+	if (!retval && !memcmp(crypt, gcm_ct, 16) && !memcmp(tag, gcm_tag, 16)) {
 		printf("PASS\n");
+	} else {
+		printf("FAIL\n");
 	}
-	else {
+
+	retval = aes_gcm_ad(gcm_key, 32, gcm_iv, 12, crypt, 16, gcm_aad, 16, tag, plain, 0);
+
+	if (!retval && !memcmp(plain, gcm_pt, 16)) {
+		printf("PASS\n");
+	} else {
 		printf("FAIL\n");
 	}
 
