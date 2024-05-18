@@ -537,8 +537,17 @@ static int c_expr(char term, struct c_ident *vars, char *token, int pop)
 
 			left = 1;
 		} else
-		if ((c >= '0' && c <= '9') || c == '\'') {
+		if ((c >= '0' && c <= '9') || c == '\'' || (c == '-' && !left)) {
+			if (c == '-') {
+				lookahead = c_getchar(0);
+				c_ungetchar(lookahead);
+				if (lookahead < '0' || lookahead > '9')
+					goto other;
+				token = c_gettoken();
+			}
 			value.imm = c_getint(token);
+			if (c == '-')
+				value.imm = -value.imm;
 			last = c_push(last, c_op_push_imm, &value);
 
 			left = 1; balance++;
@@ -552,6 +561,7 @@ static int c_expr(char term, struct c_ident *vars, char *token, int pop)
 			left = 0;
 		} else
 		if (c != ' ') {
+other:
 			if (c_isident[ARCH_INDEX(c)])
 				var = c_find_ident(vars, NULL, token);
 			else
