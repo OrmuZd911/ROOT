@@ -758,6 +758,9 @@ check: default
 	$(MAKE) unit-tests
 	../run/john --test=0 --verbosity=2 --format=cpu
 	../run/john --test=0 --verbosity=2 --format=+dynamic,all
+	if [ -x /usr/bin/md5sum ]; then \
+		JOHN=../run/john tests/test_externals.sh | md5sum -c tests/test_externals.md5; \
+	fi
 
 depend:
 	makedepend -fMakefile.dep -Y *.c 2>> /dev/null
