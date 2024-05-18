@@ -319,6 +319,8 @@ Major changes from 1.9.0-jumbo-1 (May 2019) in this bleeding-edge version:
 
 - Add Armory wallet support (accepts btcrecover data extracts).  [Solar; 2024]
 
+- Add Combinator external mode (combines words into pairs).  [Solar; 2024]
+
 
 Major changes from 1.8.0-jumbo-1 (December 2014) to 1.9.0-jumbo-1 (May 2019):
 
