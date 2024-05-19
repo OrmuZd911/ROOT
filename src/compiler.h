@@ -21,7 +21,7 @@
 #define C_ERROR_NONE			0
 #define C_ERROR_UNKNOWN			1
 #define C_ERROR_UNEXPECTED		2
-#define C_ERROR_COUNT			3
+#define C_ERROR_EXPR			3
 #define C_ERROR_TOOLONG			4
 #define C_ERROR_TOOCOMPLEX		5
 #define C_ERROR_ARRAYSIZE		6
