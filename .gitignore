@@ -113,3 +113,10 @@ src/.vscode/
 /src/.vs
 /src/CppProperties.json
 /src/launch.vs.json
+
+# Python-related files
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+**/venv/
