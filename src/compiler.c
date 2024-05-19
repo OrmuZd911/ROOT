@@ -439,6 +439,26 @@ static void (*c_push
 
 static void c_subexpr(void (**last)(void), const struct c_op *op)
 {
+	/* Compile-time evaluate binary op after push_imm_imm */
+	if (op->class == C_CLASS_BINARY && *last == c_op_push_imm_imm) {
+		/* Patch push_imm_imm to push_imm of operation result */
+		*last = c_op_push_imm;
+		if (c_pass) {
+			c_stack[1].mem = &(c_code_ptr - 2)->imm;
+			(c_code_ptr++)->op = op->op;
+			(c_code_ptr++)->op = c_op_assign_pop;
+			(c_code_ptr++)->op = c_op_return;
+			c_execute_fast(c_code_ptr -= 6);
+			c_code_ptr->op = c_op_push_imm;
+			c_code_ptr += 2;
+		} else
+			c_code_ptr--;
+		return;
+	}
+
+	/* Compile-time evaluate binary op after push_*_imm, push_imm */
+	/* Unimplemented, need to start tracking penultimate op first */
+
 	/* Compile-time evaluate unary op after any push ending in imm */
 	if (op->class == C_CLASS_LEFT && (*last == c_op_push_imm ||
 	    *last == c_op_push_imm_imm || *last == c_op_push_mem_imm ||
@@ -457,10 +477,10 @@ static void c_subexpr(void (**last)(void), const struct c_op *op)
 		return;
 	}
 
+	*last = op->op;
 	if (c_pass)
 		c_code_ptr->op = op->op;
 	c_code_ptr++;
-	*last = op->op;
 }
 
 static int c_block(char term, struct c_ident *vars);
