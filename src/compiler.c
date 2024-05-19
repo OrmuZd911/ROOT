@@ -1,6 +1,6 @@
 /*
  * This file is part of John the Ripper password cracker,
- * Copyright (c) 1996-2000,2003,2005,2011-2013,2015,2018 by Solar Designer
+ * Copyright (c) 1996-2000,2003,2005,2011-2013,2015,2018,2024 by Solar Designer
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted.
@@ -437,6 +437,32 @@ static void (*c_push
 	return last;
 }
 
+static void c_subexpr(void (**last)(void), const struct c_op *op)
+{
+	/* Compile-time evaluate unary op after any push ending in imm */
+	if (op->class == C_CLASS_LEFT && (*last == c_op_push_imm ||
+	    *last == c_op_push_imm_imm || *last == c_op_push_mem_imm ||
+	    *last == c_op_push_mem_mem_mem_imm)) {
+		/* Patch the last immediate operand with operation result */
+		if (c_pass) {
+			c_stack[1].mem = &(c_code_ptr - 1)->imm;
+			c_int imm = (c_code_ptr - 1)->imm;
+			(c_code_ptr++)->op = c_op_push_imm;
+			(c_code_ptr++)->imm = imm;
+			(c_code_ptr++)->op = op->op;
+			(c_code_ptr++)->op = c_op_assign_pop;
+			(c_code_ptr++)->op = c_op_return;
+			c_execute_fast(c_code_ptr -= 5);
+		}
+		return;
+	}
+
+	if (c_pass)
+		c_code_ptr->op = op->op;
+	c_code_ptr++;
+	*last = op->op;
+}
+
 static int c_block(char term, struct c_ident *vars);
 
 static int c_define(char term, struct c_ident **vars, struct c_ident *globals)
@@ -521,10 +547,7 @@ static int c_expr(char term, struct c_ident *vars, char *token, int pop)
 				if (c_ops[stack[sp]].class == C_CLASS_BINARY)
 					balance--;
 
-				last = c_ops[stack[sp]].op;
-				if (c_pass)
-					c_code_ptr->op = last;
-				c_code_ptr++;
+				c_subexpr(&last, &c_ops[stack[sp]]);
 
 				if (!stack[sp]) break;
 			}
@@ -597,10 +620,7 @@ static int c_expr(char term, struct c_ident *vars, char *token, int pop)
 					if (op2->class == C_CLASS_BINARY)
 						balance--;
 
-					last = op2->op;
-					if (c_pass)
-						c_code_ptr->op = last;
-					c_code_ptr++;
+					c_subexpr(&last, op2);
 
 					sp--;
 				}
@@ -862,7 +882,8 @@ int c_compile(int (*ext_getchar)(void), void (*ext_rewind)(void),
 
 		if (c_errno || c_pass) break;
 
-		c_code_start = mem_alloc((size_t)c_code_ptr);
+/* 5 extra slots for temporary code during constant subexpression evaluation */
+		c_code_start = mem_alloc((size_t)(c_code_ptr + 5));
 		c_data_start = mem_alloc((size_t)c_data_ptr);
 		memset(c_data_start, 0, (size_t)c_data_ptr);
 	}
