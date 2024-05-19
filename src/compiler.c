@@ -104,12 +104,15 @@ static char *c_reserved[] = {
 #define C_CLASS_LEFT			1
 #define C_CLASS_RIGHT			2
 
+#define C_LVALUE			1
+
 struct c_op {
 	int prec;
 	int dir;
 	int class;
 	char *name;
 	void (*op)(void);
+	int lvalue;
 };
 
 #ifdef __GNUC__
@@ -441,6 +444,10 @@ static void c_subexpr(void (**last)(void), const struct c_op *op)
 {
 	/* Compile-time evaluate binary op after push_imm_imm */
 	if (op->class == C_CLASS_BINARY && *last == c_op_push_imm_imm) {
+		if (op->lvalue) {
+			c_errno = C_ERROR_EXPR;
+			return;
+		}
 		/* Patch push_imm_imm to push_imm of operation result */
 		*last = c_op_push_imm;
 		if (c_pass) {
@@ -460,9 +467,13 @@ static void c_subexpr(void (**last)(void), const struct c_op *op)
 	/* Unimplemented, need to start tracking penultimate op first */
 
 	/* Compile-time evaluate unary op after any push ending in imm */
-	if (op->class == C_CLASS_LEFT && (*last == c_op_push_imm ||
+	if (op->class != C_CLASS_BINARY && (*last == c_op_push_imm ||
 	    *last == c_op_push_imm_imm || *last == c_op_push_mem_imm ||
 	    *last == c_op_push_mem_mem_mem_imm)) {
+		if (op->lvalue) {
+			c_errno = C_ERROR_EXPR;
+			return;
+		}
 		/* Patch the last immediate operand with operation result */
 		if (c_pass) {
 			c_stack[1].mem = &(c_code_ptr - 1)->imm;
@@ -575,7 +586,7 @@ static int c_expr(char term, struct c_ident *vars, char *token, int pop)
 			if ((c == ')' && stack[sp] >= 0) ||
 			    (c == ']' && stack[sp]) ||
 			    ((c == ';' || (term != ')' && c == term)) && sp))
-				c_errno = C_ERROR_COUNT;
+				c_errno = C_ERROR_EXPR;
 			if (c_errno || (!sp && c == term)) break;
 
 			left = 1;
@@ -661,7 +672,7 @@ static int c_expr(char term, struct c_ident *vars, char *token, int pop)
 
 	if (c_errno) return c_errno;
 
-	if (sp || balance) c_errno = C_ERROR_COUNT;
+	if (sp || balance) c_errno = C_ERROR_EXPR;
 
 	if (pop) {
 		if (last == c_op_assign) {
@@ -1653,17 +1664,17 @@ static void (*c_op_assign_pop)(void) = c_f_op_assign_pop;
 /* Must be in the same order as ops[] in c_execute_fast() */
 static struct c_op c_ops[] = {
 	{1, C_LEFT_TO_RIGHT, C_CLASS_BINARY, "[", c_op_index},
-	{2, C_RIGHT_TO_LEFT, C_CLASS_BINARY, "=", c_f_op_assign},
-	{2, C_RIGHT_TO_LEFT, C_CLASS_BINARY, "+=", c_op_add_a},
-	{2, C_RIGHT_TO_LEFT, C_CLASS_BINARY, "-=", c_op_sub_a},
-	{2, C_RIGHT_TO_LEFT, C_CLASS_BINARY, "*=", c_op_mul_a},
-	{2, C_RIGHT_TO_LEFT, C_CLASS_BINARY, "/=", c_op_div_a},
-	{2, C_RIGHT_TO_LEFT, C_CLASS_BINARY, "%=", c_op_mod_a},
-	{2, C_RIGHT_TO_LEFT, C_CLASS_BINARY, "|=", c_op_or_a},
-	{2, C_RIGHT_TO_LEFT, C_CLASS_BINARY, "^=", c_op_xor_a},
-	{2, C_RIGHT_TO_LEFT, C_CLASS_BINARY, "&=", c_op_and_a},
-	{2, C_RIGHT_TO_LEFT, C_CLASS_BINARY, "<<=", c_op_shl_a},
-	{2, C_RIGHT_TO_LEFT, C_CLASS_BINARY, ">>=", c_op_shr_a},
+	{2, C_RIGHT_TO_LEFT, C_CLASS_BINARY, "=", c_f_op_assign, C_LVALUE},
+	{2, C_RIGHT_TO_LEFT, C_CLASS_BINARY, "+=", c_op_add_a, C_LVALUE},
+	{2, C_RIGHT_TO_LEFT, C_CLASS_BINARY, "-=", c_op_sub_a, C_LVALUE},
+	{2, C_RIGHT_TO_LEFT, C_CLASS_BINARY, "*=", c_op_mul_a, C_LVALUE},
+	{2, C_RIGHT_TO_LEFT, C_CLASS_BINARY, "/=", c_op_div_a, C_LVALUE},
+	{2, C_RIGHT_TO_LEFT, C_CLASS_BINARY, "%=", c_op_mod_a, C_LVALUE},
+	{2, C_RIGHT_TO_LEFT, C_CLASS_BINARY, "|=", c_op_or_a, C_LVALUE},
+	{2, C_RIGHT_TO_LEFT, C_CLASS_BINARY, "^=", c_op_xor_a, C_LVALUE},
+	{2, C_RIGHT_TO_LEFT, C_CLASS_BINARY, "&=", c_op_and_a, C_LVALUE},
+	{2, C_RIGHT_TO_LEFT, C_CLASS_BINARY, "<<=", c_op_shl_a, C_LVALUE},
+	{2, C_RIGHT_TO_LEFT, C_CLASS_BINARY, ">>=", c_op_shr_a, C_LVALUE},
 	{3, C_LEFT_TO_RIGHT, C_CLASS_BINARY, "||", c_op_or_i},
 	{4, C_LEFT_TO_RIGHT, C_CLASS_BINARY, "&&", c_op_and_b},
 	{5, C_LEFT_TO_RIGHT, C_CLASS_BINARY, "|", c_op_or_i},
@@ -1685,10 +1696,10 @@ static struct c_op c_ops[] = {
 	{13, C_RIGHT_TO_LEFT, C_CLASS_LEFT, "!", c_op_not_b},
 	{13, C_RIGHT_TO_LEFT, C_CLASS_LEFT, "~", c_op_not_i},
 	{13, C_RIGHT_TO_LEFT, C_CLASS_LEFT, "-", c_op_neg},
-	{13, C_RIGHT_TO_LEFT, C_CLASS_LEFT, "++", c_op_inc_l},
-	{13, C_RIGHT_TO_LEFT, C_CLASS_LEFT, "--", c_op_dec_l},
-	{14, C_LEFT_TO_RIGHT, C_CLASS_RIGHT, "++", c_op_inc_r},
-	{14, C_LEFT_TO_RIGHT, C_CLASS_RIGHT, "--", c_op_dec_r},
+	{13, C_RIGHT_TO_LEFT, C_CLASS_LEFT, "++", c_op_inc_l, C_LVALUE},
+	{13, C_RIGHT_TO_LEFT, C_CLASS_LEFT, "--", c_op_dec_l, C_LVALUE},
+	{14, C_LEFT_TO_RIGHT, C_CLASS_RIGHT, "++", c_op_inc_r, C_LVALUE},
+	{14, C_LEFT_TO_RIGHT, C_CLASS_RIGHT, "--", c_op_dec_r, C_LVALUE},
 #ifdef PRINT_INSNS
 	{0, 0, 0, "return", c_f_op_return},
 	{0, 0, 0, "bz", c_f_op_bz},
