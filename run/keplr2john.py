@@ -30,7 +30,7 @@ from ccl_chrome_indexeddb import ccl_leveldb
 
 # Welcome message
 prog = os.path.basename(sys.argv[0])
-print('Keplr wallet data extractor\n')
+print('Data extractor for Keplr wallet (only works with Chrome extension data)\n')
 
 #######################################################################################
 # Check program params
@@ -63,16 +63,29 @@ except Exception as e:
     print(f'Error loading database: {e}')
     sys.exit(0)
 
+found_something = False
+google = False
+
 #######################################################################################
 # Search all records and load users
 #######################################################################################
 users = set()
 for record in leveldb_records.iterate_records_raw():
+    # Recognized as Google technology used by Chrome/Chromium/Chrome-esque applications to store data
+    google = True
+
+    if os.getenv('JOHN_VERBOSE') == '2':
+        print(f"{record}\n")
+
     # Check keyring store
     if b"keyring/key-store" == record.user_key or b"keyring/key-multi-store" == record.user_key:
 
         kv_db_key = record.user_key.decode('utf-8', 'ignore')
         key_store = json.loads(record.value.decode('utf-8', 'ignore'))
+
+        if os.getenv('JOHN_VERBOSE') == '1':
+            print(f"{kv_db_key} : {key_store}\n")
+
         if key_store is None:
             continue
 
@@ -106,6 +119,7 @@ for record in leveldb_records.iterate_records_raw():
                 return False
 
         def load_user_hash(key_store):
+            global found_something
             # General checks
             if 'crypto' not in key_store:
                 print("Error: No crypto found")
@@ -185,6 +199,7 @@ for record in leveldb_records.iterate_records_raw():
                 iv = key_store['crypto']['cipherparams']['iv']
 
             users.add((username, salt_hex, ciphertext_hex, mac_hex, iv))
+            found_something = True
 
         # Add the user to the set of users
         if kv_db_key == "keyring/key-store":
@@ -193,6 +208,14 @@ for record in leveldb_records.iterate_records_raw():
         if kv_db_key == "keyring/key-multi-store":
             for store in key_store:
                 load_user_hash(store)
+
+if not found_something:
+    print('Error:')
+    print(f' - No valid data found in "{sys.argv[1]}" folder.')
+
+    if not google:
+        print(' - The file was not detected as valid ccl_chrome_indexeddb (LevelDB) technology.')
+    sys.exit(1)
 
 #######################################################################################
 # Show users
