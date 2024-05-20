@@ -1663,7 +1663,7 @@ static void (*c_op_assign_pop)(void) = c_f_op_assign_pop;
 
 /* Must be in the same order as ops[] in c_execute_fast() */
 static struct c_op c_ops[] = {
-	{1, C_LEFT_TO_RIGHT, C_CLASS_BINARY, "[", c_op_index},
+	{1, C_LEFT_TO_RIGHT, C_CLASS_BINARY, "[", c_op_index, C_LVALUE},
 	{2, C_RIGHT_TO_LEFT, C_CLASS_BINARY, "=", c_f_op_assign, C_LVALUE},
 	{2, C_RIGHT_TO_LEFT, C_CLASS_BINARY, "+=", c_op_add_a, C_LVALUE},
 	{2, C_RIGHT_TO_LEFT, C_CLASS_BINARY, "-=", c_op_sub_a, C_LVALUE},
