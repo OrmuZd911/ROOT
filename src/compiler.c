@@ -935,10 +935,9 @@ void *c_lookup(const char *name)
 void c_execute_fast(void *addr)
 {
 /*
- * Push a NULL pc to the stack, so that when the VM function invokes
- * c_f_op_return() it sets pc to NULL terminating the loop below.
+ * The top stack element may have been pre-filled by c_subexpr() and used by
+ * the temporary code snippets it generates.
  */
-	c_stack[0].pc = NULL;
 	c_sp = &c_stack[2];
 
 	c_pc = addr;
@@ -971,6 +970,8 @@ void c_execute_fast(void *addr)
 {
 	union c_insn *pc = addr;
 /*
+ * In addition to usage by c_subexpr() described above, in this implementation:
+ *
  * We cache the top of stack value in imm.  We initially set sp to &c_stack[2]
  * so that there's room for op_push_* to spill imm to stack even when there
  * wasn't actually a previous top of stack value to cache (since we're at the
@@ -1333,7 +1334,7 @@ op_dec_r:
 
 static void c_f_op_return(void)
 {
-	c_pc = (c_sp -= 2)->pc;
+	c_pc = NULL;
 }
 
 static void c_f_op_bz(void)
