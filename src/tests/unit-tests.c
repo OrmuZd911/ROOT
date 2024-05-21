@@ -623,9 +623,9 @@ void _nontest_gen_fgetl_files(int generate) {
 
 	if (!generate) {
 		// if !generate, then delete
-		unlink("/tmp/jnk.txt");
-		unlink("/tmp/jnkd.txt");
-		unlink("/tmp/jnkfu.txt");
+		unlink("jnk.txt");
+		unlink("jnkd.txt");
+		unlink("jnkfu.txt");
 		return;
 	}
 	/* first, setup the fgetl 'pad' data (moved from main() function. */
@@ -635,9 +635,9 @@ void _nontest_gen_fgetl_files(int generate) {
 	_fgetl_pad[_FGETL_PAD_SIZE] = 0;
 
 	start_test(__FUNCTION__); inc_test(); inc_test(); inc_test();
-	fp = fopen("/tmp/jnk.txt", "wb");
-	fp1 = fopen("/tmp/jnkd.txt", "wb");
-	fp2 = fopen("/tmp/jnkfu.txt", "wb");
+	fp = fopen("jnk.txt", "wb");
+	fp1 = fopen("jnkd.txt", "wb");
+	fp2 = fopen("jnkfu.txt", "wb");
 	for (i = 0; i < 5999; ++i) {
 		char *is_null = "";
 		char null_or_space = ' ';
@@ -787,17 +787,17 @@ void test_fgetl() {
 	start_test(__FUNCTION__);
 
 	_fgetl_fudge = 0;
-	_tst_fget_l_ll("/tmp/jnk.txt", 1);
-	_tst_fget_l_ll("/tmp/jnkd.txt", 1);
-	_tst_fget_l_ll("/tmp/jnkfu.txt", 1);
+	_tst_fget_l_ll("jnk.txt", 1);
+	_tst_fget_l_ll("jnkd.txt", 1);
+	_tst_fget_l_ll("jnkfu.txt", 1);
 	end_test();
 }
 // char *fgetll(char *s, size_t size, FILE *stream)
 void test_fgetll() {
 	start_test(__FUNCTION__);
-	_tst_fget_l_ll("/tmp/jnk.txt", 0);
-	_tst_fget_l_ll("/tmp/jnkd.txt", 0);
-	_tst_fget_l_ll("/tmp/jnkfu.txt", 0);
+	_tst_fget_l_ll("jnk.txt", 0);
+	_tst_fget_l_ll("jnkd.txt", 0);
+	_tst_fget_l_ll("jnkfu.txt", 0);
 	end_test();
 }
 // void *strncpy_pad(void *dst, const void *src, size_t size, uint8_t pad)
