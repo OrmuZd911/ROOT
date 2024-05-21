@@ -181,7 +181,7 @@ as input the "stat" file and a file with a single cracked password per line.
 Here is a sample output:
 
 *******************************************************************************
-user@host:run$ ./mkvcalcproba stats /tmp/passwordlist
+user@host:run$ ./mkvcalcproba stats password.lst
 test    33+16+28+20     97      4       40030907        45
 password        29+16+30+22+51+25+24+30 227     8       2698006565378672        177
 32'[[!  55+24+98+1000+23+29     1229    6       39949021871     1169
@@ -194,7 +194,7 @@ meaning of the column:
 2/ Sum of all "markov probabilities" of every letter of the word. This is
 supposed to help identify which parts of the password makes them strong. The
 number "1000" is written when no 1st/2nd letter combinations were found in the
-stat file (for exemple ' then [ here).
+stat file (for example ' then [ here).
 3/ Markov strength
 4/ Password length
 5/ Rank when bruteforced "stupidly" (a, b, c, ..., aa, ab, ac ...) considering
