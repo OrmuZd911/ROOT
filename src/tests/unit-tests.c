@@ -45,7 +45,12 @@
 #include "../sha2.h"
 
 char *_fgetl_pad = NULL;
+#ifdef __sun
+/* Solaris fprintf() seems to get confused at around 16384 */
+#define _FGETL_PAD_SIZE 16000
+#else
 #define _FGETL_PAD_SIZE 19000
+#endif
 #define _ISHEX_CNT 260
 // if we miss a line(s), only show 1 error. This variable is used to adjust
 // the linecount since we don't have the expected line count (we missed
