@@ -212,6 +212,9 @@ static int crypt_all(int *pcount, struct db_salt *salt)
 	if (new_key)
 	{
 		nt_hash(count);
+#if !ARCH_LITTLE_ENDIAN
+		swap(last, count * 4);
+#endif
 		new_key = 0;
 	}
 

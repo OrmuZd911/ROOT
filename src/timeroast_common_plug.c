@@ -10,6 +10,7 @@
 
 #include <stdio.h>
 
+#include "arch.h"
 #include "formats.h"
 #include "memory.h"
 #include "common.h"
@@ -67,6 +68,9 @@ void *timeroast_binary(char *ciphertext)
 		v |= ((unsigned int)(atoi16[ARCH_INDEX(hash[7])])) << 24;
 		hash += 8;
 
+#if !ARCH_LITTLE_ENDIAN
+		v = JOHNSWAP(v);
+#endif
 		binary[i] = v;
 	}
 	return binary;
@@ -92,6 +96,9 @@ void *timeroast_salt(char *ciphertext)
 		v |= ((unsigned int)(atoi16[ARCH_INDEX(hash[7])])) << 24;
 		hash += 8;
 
+#if !ARCH_LITTLE_ENDIAN
+		v = JOHNSWAP(v);
+#endif
 		salt[i] = v;
 	}
 	return salt;
