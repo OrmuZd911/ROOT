@@ -1667,9 +1667,9 @@ void opencl_init_auto_setup(int p_default_value, int p_hash_loops,
 	autotune_real_db = db && db->real && db->real == db;
 	autotune_salts = db ? db->salts : NULL;
 
-	/* We can't process more than 4G keys per crypt() */
+	/* We can't process more than 2G-1 keys per crypt_all() */
 	if (mask_int_cand.num_int_cand > 1)
-		gws_limit = MIN(gws_limit, 0x100000000ULL / mask_int_cand.num_int_cand / ocl_v_width);
+		gws_limit = MIN(gws_limit, 0x7fffffffU / mask_int_cand.num_int_cand / ocl_v_width);
 }
 
 void opencl_find_best_lws(size_t group_size_limit, int sequential_id,

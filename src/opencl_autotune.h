@@ -128,9 +128,9 @@ static void autotune_run_extra(struct fmt_main *self, unsigned int rounds,
 			        rounds);
 	}
 
-	/* We can't process more than 4G keys per crypt() */
+	/* We can't process more than 2G-1 keys per crypt_all() */
 	if (mask_int_cand.num_int_cand > 1)
-		gws_limit = MIN(gws_limit, 0x100000000ULL / mask_int_cand.num_int_cand / ocl_v_width);
+		gws_limit = MIN(gws_limit, 0x7fffffffU / mask_int_cand.num_int_cand / ocl_v_width);
 
 	/* Read LWS/GWS prefs from config or environment */
 	opencl_get_user_preferences(FORMAT_LABEL);
