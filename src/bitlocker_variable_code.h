@@ -42,7 +42,8 @@ static void *bitlocker_common_get_salt(char *ciphertext)
 	char *p;
 	static bitlocker_custom_salt *cs;
 
-	cs = mem_calloc_tiny(sizeof(bitlocker_custom_salt), MEM_ALIGN_WORD);
+	if (!cs)
+		cs = mem_calloc_tiny(sizeof(bitlocker_custom_salt), MEM_ALIGN_WORD);
 
 	ctcopy += TAG_LENGTH;
 	p = strtokm(ctcopy, "$"); // version
