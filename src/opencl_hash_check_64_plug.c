@@ -467,7 +467,7 @@ int ocl_hc_64_extract_info(struct db_salt *salt, void (*set_kernel_args)(void), 
 	BENCH_CLERROR(clEnqueueReadBuffer(queue[gpu_id], buffer_hash_ids_64, CL_FALSE, 0, sizeof(cl_uint), ocl_hc_hash_ids, 0, NULL, multi_profilingEvent[3]), "failed in reading back num cracked hashes.");
 
 	BENCH_CLERROR(clFlush(queue[gpu_id]), "failed in clFlush");
-	WAIT_SLEEP
+	WAIT_SLEEP_MAX(10000)
 	BENCH_CLERROR(clFinish(queue[gpu_id]), "failed in clFinish");
 	WAIT_UPDATE
 	WAIT_DONE
