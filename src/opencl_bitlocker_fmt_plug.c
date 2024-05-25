@@ -443,11 +443,24 @@ static void set_salt(void * cipher_salt_input)
 	// -----------------------
 }
 
+static void set_key(char *key, int index);
+static char *get_key(int index);
+
 static int crypt_all(int *pcount, struct db_salt *salt)
 {
 	const int count = *pcount;
 	int i, startIndex=0, h_loopHash=0;
 	size_t *lws = local_work_size ? &local_work_size : NULL;
+
+/*
+ * This format's set_key() was developed under the wrong assumption that it can
+ * rely on a previous set_salt().  It cannot.  So let's redo it here now that
+ * we're actually iterating over salts.
+ * FIXME: Simplify set_key() instead, split out the per-salt functionality into
+ * a function that we'll call here.
+ */
+	for (i = 0; i < count; i++)
+		set_key(get_key(i), i);
 
 	global_work_size = GET_NEXT_MULTIPLE(count, local_work_size);
 	h_found[0] = -1;
