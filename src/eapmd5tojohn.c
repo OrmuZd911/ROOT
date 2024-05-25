@@ -1,6 +1,6 @@
 // http://www.willhackforsushi.com/code/eapmd5pass/1.4/eapmd5pass-1.4.tgz
 //
-// cat radiotap.h utils.h byteswap.h eapmd5pass.h ieee80211.h ieee8021x.h ietfproto.h utils.c eapmd5pass.c > combined.c
+// cat radiotap.h utils.h eapmd5pass.h ieee80211.h ieee8021x.h ietfproto.h utils.c eapmd5pass.c > combined.c
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -240,66 +240,6 @@ enum ieee80211_radiotap_type {
 /* Prototypes */
 void to_upper (char *s);
 int str2hex (char *string, uint8_t *hexstr, int len);
-/* Copyright (c) 2007, Joshua Wright <jwright@hasborg.com>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation. See COPYING for more
- * details.
- *
- * This software is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- */
-
-#ifndef BYTESWAP_H
-#define BYTESWAP_H
-
-#define __swab16(x) \
-({ \
-        uint16_t __x = (x); \
-        ((uint16_t)( \
-                (((uint16_t)(__x) & (uint16_t)0x00ffU) << 8) | \
-                (((uint16_t)(__x) & (uint16_t)0xff00U) >> 8) )); \
-})
-
-#define __swab32(x) \
-({ \
-        uint32_t __x = (x); \
-        ((uint32_t)( \
-                (((uint32_t)(__x) & (uint32_t)0x000000ffUL) << 24) | \
-                (((uint32_t)(__x) & (uint32_t)0x0000ff00UL) <<  8) | \
-                (((uint32_t)(__x) & (uint32_t)0x00ff0000UL) >>  8) | \
-                (((uint32_t)(__x) & (uint32_t)0xff000000UL) >> 24) )); \
-})
-
-#define __swab64(x) \
-({ \
-        uint64_t __x = (x); \
-        ((uint64_t)( \
-                (uint64_t)(((uint64_t)(__x) & (uint64_t)0x00000000000000ffULL) << 56) | \
-                (uint64_t)(((uint64_t)(__x) & (uint64_t)0x000000000000ff00ULL) << 40) | \
-                (uint64_t)(((uint64_t)(__x) & (uint64_t)0x0000000000ff0000ULL) << 24) | \
-                (uint64_t)(((uint64_t)(__x) & (uint64_t)0x00000000ff000000ULL) <<  8) | \
-                (uint64_t)(((uint64_t)(__x) & (uint64_t)0x000000ff00000000ULL) >>  8) | \
-                (uint64_t)(((uint64_t)(__x) & (uint64_t)0x0000ff0000000000ULL) >> 24) | \
-                (uint64_t)(((uint64_t)(__x) & (uint64_t)0x00ff000000000000ULL) >> 40) | \
-                (uint64_t)(((uint64_t)(__x) & (uint64_t)0xff00000000000000ULL) >> 56) )); \
-})
-
-#ifdef WORDS_BIGENDIAN
-#warning "Compiling for big-endian"
-#define le16_to_cpu(x) __swab16(x)
-#define le32_to_cpu(x) __swab32(x)
-#define le64_to_cpu(x) __swab64(x)
-#else
-#define le16_to_cpu(x) (x)
-#define le32_to_cpu(x) (x)
-#define le64_to_cpu(x) (x)
-#endif
-
-#endif /* BYTESWAP_H */
 /* Copyright (c) 2007, Joshua Wright <jwright@hasborg.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -629,7 +569,8 @@ int radiotap_offset(pcap_t *p, struct pcap_pkthdr *h)
 	if (pcap_next_ex(p, &h, (const u_char **)&dot11packetbuf) > -1) {
 
 		rtaphdr = (struct ieee80211_radiotap_header *)dot11packetbuf;
-		rtaphdrlen = le16_to_cpu(rtaphdr->it_len); /* rtap is LE */
+		unsigned char *it_len_p = (unsigned char *)&rtaphdr->it_len;
+		rtaphdrlen = it_len_p[0] | ((uint32_t)it_len_p[1] << 8); /* rtap is LE */
 
 		/* Sanity check on header length */
 		if (rtaphdrlen > (h->len - DOT11HDR_MINLEN)) {
