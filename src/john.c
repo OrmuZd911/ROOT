@@ -284,7 +284,7 @@ static void john_register_all(void)
 
 static void john_log_format(void)
 {
-	int enc_len, utf8_len;
+	int enc_len, utf8_len, cmp_len;
 	char max_len_s[128];
 
 	/* make sure the format is properly initialized */
@@ -294,7 +294,7 @@ static void john_log_format(void)
 #endif
 	fmt_init(database.format);
 
-	utf8_len = enc_len = database.format->params.plaintext_length;
+	utf8_len = enc_len = cmp_len = database.format->params.plaintext_length;
 	if (options.target_enc == UTF_8)
 		utf8_len /= 3;
 
@@ -310,11 +310,13 @@ static void john_log_format(void)
 	} else if (enc_len == 3 * fmt_raw_len) {
 		/* Example: NT */
 		snprintf(max_len_s, sizeof(max_len_s), "%d", utf8_len);
+		cmp_len = utf8_len;
 	} else {
 		/* Example: SybaseASE */
 		snprintf(max_len_s, sizeof(max_len_s),
 		         "%d [worst case UTF-8] to %d [ASCII]",
 		         utf8_len, fmt_raw_len);
+		cmp_len = fmt_raw_len;
 	}
 
 	log_event("- Hash type: %.100s%s%.100s (min-len %d, max-len %s%s)",
@@ -328,6 +330,13 @@ static void john_log_format(void)
 
 	log_event("- Algorithm: %.100s",
 	    database.format->params.algorithm_name);
+
+	if (cmp_len < 125 && (!options.force_maxlength || options.force_maxlength > cmp_len) &&
+	    (options.flags & (FLG_BATCH_CHK|FLG_SINGLE_CHK|FLG_WORDLIST_CHK|FLG_LOOPBACK_CHK|FLG_PRINCE_CHK|FLG_EXTERNAL_CHK)))
+		printf("Note: Passwords longer than %s %s%s\n", max_len_s,
+		    (database.format->params.flags & FMT_TRUNC) ?
+		    ((database.options->flags & DB_SPLIT) ? "split" : "truncated") : "rejected",
+		    (database.format->params.flags & FMT_TRUNC) ? " (property of the hash)" : "");
 }
 
 static void john_log_format2(void)
