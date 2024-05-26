@@ -814,6 +814,16 @@ static void add_uniq (db_entry_t *db_entry, char *input_buf, int input_len)
     uniq->alloc += ALLOC_NEW_DUPES;
 
     uniq->data = realloc (uniq->data, uniq->alloc * sizeof (uniq_data_t));
+    if (uniq->data == NULL)
+    {
+#ifdef JTR_MODE
+      fprintf (stderr, "Out of memory trying to allocate "Zu" bytes\n", (size_t) uniq->alloc * sizeof (uniq_data_t));
+      error();
+#else
+      fprintf (stderr, "Out of memory trying to allocate %zu bytes\n", (size_t) uniq->alloc * sizeof (uniq_data_t));
+      exit (-1);
+#endif
+    }
   }
 
   uniq->data[index].element = add_elem (db_entry, input_buf, input_len);
