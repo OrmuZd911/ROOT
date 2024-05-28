@@ -214,6 +214,7 @@ static void set_key(char *_key, int index)
 #ifdef SIMD_COEF_32
 	const unsigned char *key = (unsigned char*)_key;
 	unsigned int *keybuf_word = &((unsigned int*)saved_key)[(index&(SIMD_COEF_32-1)) + (unsigned int)index/SIMD_COEF_32*SHA_BUF_SIZ*SIMD_COEF_32];
+	unsigned int *keybuf_end = keybuf_word + 15*SIMD_COEF_32;
 	unsigned int len, temp2;
 
 	len = SALT_SIZE >> 1;
@@ -241,12 +242,14 @@ static void set_key(char *_key, int index)
 
 key_cleaning:
 	keybuf_word += SIMD_COEF_32;
-	while(*keybuf_word) {
+	while (keybuf_word < keybuf_end && *keybuf_word) {
 		*keybuf_word = 0;
 		keybuf_word += SIMD_COEF_32;
 	}
+	if (&keybuf_word[SIMD_COEF_32] < keybuf_end && keybuf_word[SIMD_COEF_32])
+		keybuf_word[SIMD_COEF_32] = 0;
 
-	((unsigned int *)saved_key)[15*SIMD_COEF_32 + (index&(SIMD_COEF_32-1)) + (unsigned int)index/SIMD_COEF_32*SHA_BUF_SIZ*SIMD_COEF_32] = len << 4;
+	*keybuf_end = len << 4;
 #else
 	UTF8 *s = (UTF8*)_key;
 	UTF16 *d = (UTF16*)saved_key;
@@ -267,6 +270,7 @@ static void set_key_CP(char *_key, int index)
 #ifdef SIMD_COEF_32
 	const unsigned char *key = (unsigned char*)_key;
 	unsigned int *keybuf_word = &((unsigned int*)saved_key)[(index&(SIMD_COEF_32-1)) + (unsigned int)index/SIMD_COEF_32*SHA_BUF_SIZ*SIMD_COEF_32];
+	unsigned int *keybuf_end = keybuf_word + 15*SIMD_COEF_32;
 	unsigned int len, temp2;
 
 	len = SALT_SIZE >> 1;
@@ -294,12 +298,14 @@ static void set_key_CP(char *_key, int index)
 
 key_cleaning_enc:
 	keybuf_word += SIMD_COEF_32;
-	while(*keybuf_word) {
+	while (keybuf_word < keybuf_end && *keybuf_word) {
 		*keybuf_word = 0;
 		keybuf_word += SIMD_COEF_32;
 	}
+	if (&keybuf_word[SIMD_COEF_32] < keybuf_end && keybuf_word[SIMD_COEF_32])
+		keybuf_word[SIMD_COEF_32] = 0;
 
-	((unsigned int *)saved_key)[15*SIMD_COEF_32 + (index&(SIMD_COEF_32-1)) + (unsigned int)index/SIMD_COEF_32*SHA_BUF_SIZ*SIMD_COEF_32] = len << 4;
+	*keybuf_end = len << 4;
 #else
 	key_length = enc_to_utf16((UTF16*)saved_key, PLAINTEXT_LENGTH,
 	                          (unsigned char*)_key, strlen(_key));
@@ -315,6 +321,7 @@ static void set_key_utf8(char *_key, int index)
 #ifdef SIMD_COEF_32
 	const UTF8 *source = (UTF8*)_key;
 	unsigned int *keybuf_word = &((unsigned int*)saved_key)[(index&(SIMD_COEF_32-1)) + (unsigned int)index/SIMD_COEF_32*SHA_BUF_SIZ*SIMD_COEF_32];
+	unsigned int *keybuf_end = keybuf_word + 15*SIMD_COEF_32;
 	UTF32 chl, chh = 0x80;
 	unsigned int len;
 
@@ -425,12 +432,14 @@ static void set_key_utf8(char *_key, int index)
 	keybuf_word += SIMD_COEF_32;
 
 bailout:
-	while(*keybuf_word) {
+	while (keybuf_word < keybuf_end && *keybuf_word) {
 		*keybuf_word = 0;
 		keybuf_word += SIMD_COEF_32;
 	}
+	if (&keybuf_word[SIMD_COEF_32] < keybuf_end && keybuf_word[SIMD_COEF_32])
+		keybuf_word[SIMD_COEF_32] = 0;
 
-	((unsigned int *)saved_key)[15*SIMD_COEF_32 + (index&(SIMD_COEF_32-1)) + (unsigned int)index/SIMD_COEF_32*SHA_BUF_SIZ*SIMD_COEF_32] = len << 4;
+	*keybuf_end = len << 4;
 #else
 	key_length = utf8_to_utf16((UTF16*)saved_key, PLAINTEXT_LENGTH,
 	                           (unsigned char*)_key, strlen(_key));
