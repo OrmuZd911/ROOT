@@ -934,6 +934,10 @@ void *c_lookup(const char *name)
 
 void c_execute_fast(void *addr)
 {
+#ifdef PRINT_INSNS
+	static unsigned long long insns;
+#endif
+
 /*
  * The top stack element may have been pre-filled by c_subexpr() and used by
  * the temporary code snippets it generates.
@@ -948,6 +952,7 @@ void c_execute_fast(void *addr)
 		while (c_ops[i].op != op && c_ops[i].prec >= 0)
 			i++;
 		fprintf(stderr, "op: %s\n", c_ops[i].name);
+		insns++;
 		op();
 #else
 		(c_pc++)->op();
@@ -962,6 +967,10 @@ void c_execute_fast(void *addr)
 		(c_pc++)->op();
 #endif
 	} while (c_pc);
+
+#ifdef PRINT_INSNS
+	fprintf(stderr, "insns: %llu\n", insns);
+#endif
 }
 
 #else
