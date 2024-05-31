@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # This software is Copyright (c) 2024, k4amos <k4amos at proton.me>
 # and it is hereby released to the general public under the following terms:
@@ -6,7 +6,10 @@
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted.
 
-# This script is the python version of radius2john.pl written by Didier ARENZANA
+# This script is essentially a python version of radius2john.pl written by Didier ARENZANA. 
+# The previous version of radius2john.py was written by Maxime GOYETTE <maxgoyette0-at-gmail.com>
+
+# ---
 
 # Utility to bruteforce RADIUS shared-secret
 # Usage: ./radius2john.py <pcap files>
@@ -14,9 +17,11 @@
 # This script depends on Scapy (https://scapy.net)
 # To install: pip install --user scapy
 
-# application of two  methods described in http://www.untruth.org/~josh/security/radius/radius-auth.html :
-# "3.3 User-Password Attribute Based Shared Secret Attack" and
-# "3.1 "Response Authenticator Based Shared Secret Attack"
+# ---
+
+# Application of two  methods described in http://www.untruth.org/~josh/security/radius/radius-auth.html :
+# "3.3 User-Password Attribute Based Shared Secret Attack"
+# "3.1 Response Authenticator Based Shared Secret Attack"
 
 # For attack 3.3 :
 # we try authentications using a known password, and sniff the radius packets to a pcpap file.
@@ -55,7 +60,7 @@ def process_packet(packet):
         ip_layer = packet[scapy.IP]
         udp_layer = packet[scapy.UDP]
 
-        if udp_layer.dport == 1812 or udp_layer.sport == 1812:
+        if udp_layer.dport in [1812, 1813] or udp_layer.sport in [1812, 1813]: 
             radius_data = bytes(udp_layer.payload)
             process_radius(ip_layer, radius_data, bytes(udp_layer.payload))
 
@@ -63,7 +68,7 @@ def process_packet(packet):
 def process_radius(ip, radius_data, udpdata):
     radius_packet = scapy.Radius(radius_data)
 
-    if radius_packet.code == 1:  # Access-Request
+    if radius_packet.code in [1, 4]:  # Access-Request, Accounting-Request
 
         user_name, user_password = None, None
         for _ in range(len(radius_packet.attributes)):
@@ -80,7 +85,7 @@ def process_radius(ip, radius_data, udpdata):
 
         all_requests[f"{ip.src}-{radius_packet.id}"] = radius_packet.authenticator
 
-    elif radius_packet.code in [2, 11, 3]:  # Access-Accept, Access-Challenge, Access-Reject
+    elif radius_packet.code in [2, 11, 3, 5]:  # Access-Accept, Access-Challenge, Access-Reject, Accounting-Response
         key = f"{ip.dst}-{radius_packet.id}"
         if key in all_requests:
             dump_response(ip.dst, all_requests[key], radius_packet, udpdata)
@@ -116,6 +121,14 @@ def dump_access_request(ip, login, ra, hashed):  # 3.3 attack
 
 
 if __name__ == "__main__":
+
+    try:
+        import scapy.all as scapy
+    except ImportError:
+        print(
+            "Scapy seems to be missing, run 'pip install --user scapy' to install it"
+        )
+        exit(1)
 
     if len(sys.argv) > 1 and "-h" not in sys.argv and "--help" not in sys.argv:
         for filename in sys.argv[1:]:
