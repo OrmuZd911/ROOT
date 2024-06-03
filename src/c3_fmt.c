@@ -129,7 +129,7 @@ static void init(struct fmt_main *self)
 #if defined(_OPENMP) && defined(__GLIBC__)
 		struct crypt_data data;
 
-		data.initialized = 0;
+		memset(&data, 0, sizeof(data));
 #endif
 
 		/*
