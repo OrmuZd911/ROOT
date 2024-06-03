@@ -626,6 +626,9 @@ static int crypt_all(int *pcount, struct db_salt *salt)
  * SunMD5 hashes, which are not yet supported by non-jumbo John natively.
  */
 #pragma omp parallel for /* default(none) private(index) shared(warned, count, crypt_out, saved_key, saved_salt, stderr) or __iob */
+#else
+#undef FMT_OMP
+#define FMT_OMP 0
 #endif
 	for (index = 0; index < count; index++) {
 		char *hash = crypt(saved_key[index], saved_salt);
