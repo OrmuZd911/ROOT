@@ -3,7 +3,8 @@
  * Solaris' MT-safe crypt(3C) with OpenMP parallelization.
  *
  * This file is part of John the Ripper password cracker,
- * Copyright (c) 2009-2015 by Solar Designer
+ * Copyright (c) 2009-2024 by Solar Designer and others:
+ * --subformat option added by magnum, JimF, Frank Dittrich
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted.
