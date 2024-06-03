@@ -271,6 +271,7 @@ static void init(struct fmt_main *self)
 		}
 
 		if (strlen(tests[0].ciphertext) == 13 &&
+		    strlen(options.subformat) != 2 &&
 		    strcasecmp(options.subformat, "descrypt") &&
 		    strcasecmp(options.subformat, "des")) {
 			fprintf(stderr, "%s not supported on this system\n",
