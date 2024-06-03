@@ -12,7 +12,7 @@
 # ---
 
 # Utility to bruteforce RADIUS shared-secret
-# Usage: ./radius2john.py <pcap files>
+# Usage: ./radius2john.py -f <pcap files>
 #
 # This script depends on Scapy (https://scapy.net)
 # To install: pip install --user scapy
@@ -76,7 +76,7 @@ def process_radius(args, ip, udpdata):
                     user_hash = attr.value
 
             if user_hash is not None:
-                if (args['login'] is not None and user_name == args['login']) or args['login'] is None:
+                if args['login'] is None or user_name == args['login']:
                     dump_access_request(
                         args, ip.src, radius_packet.authenticator, user_hash
                     )
@@ -122,7 +122,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,epilog=
     """
     ### Utility to bruteforce RADIUS shared-secret written by k4amos
-    Basic Usage: ./radius2john.py <pcap files>"
+    Basic Usage: ./radius2john.py -f <pcap files>"
 
     ---
 
@@ -145,14 +145,13 @@ if __name__ == "__main__":
     parser.add_argument('-l', '--login', type=str,help='User login used for the 3.3 attack')
     parser.add_argument('-p', '--password', type=str, help='User password used for the 3.3 attack')
     
-
-
     parsed_args = parser.parse_args()
     args = vars(parsed_args)
 
-    if args["login"] is not None and args["password"] is None:
+    if args["login"] is not None and args["password"] is None: 
+        # Attack 3.3 can work without login verification (if there is only one client, there is no point), but cannot work without a password
         print("You must specify the password used by the client for the '3.3 User-Password Attribute Based Shared Secret Attack'")
-        print("Basic Usage: ./radius2john.py <pcap files>")
+        print("Basic Usage: ./radius2john.py -f <pcap files>")
         print("You can specify '-h' to display help")
         sys.exit(1)
 
