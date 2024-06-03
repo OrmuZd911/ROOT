@@ -125,7 +125,7 @@ static void init(struct fmt_main *self)
 {
 	if (options.subformat) {
 		int i;
-		char *salt = tests[0].ciphertext;
+		char *salt = NULL;
 #if defined(_OPENMP) && defined(__GLIBC__)
 		struct crypt_data data;
 
@@ -235,8 +235,10 @@ static void init(struct fmt_main *self)
 			self->params.benchmark_comment = " bsdicrypt x725";
 			salt = "_J9..CCCC";
 		} else if (!strcasecmp(options.subformat, "descrypt") ||
-		           !strcasecmp(options.subformat, "des")) {
-			salt = "CC";
+		           !strcasecmp(options.subformat, "des") ||
+			   strlen(options.subformat) == 2) {
+			/* Don't replace the tests */
+			return;
 		} else {
 			char *p = mem_alloc_tiny(strlen(options.subformat) + 2,
 			                         MEM_ALIGN_NONE);
@@ -270,10 +272,7 @@ static void init(struct fmt_main *self)
 				break;
 		}
 
-		if (strlen(tests[0].ciphertext) == 13 &&
-		    strlen(options.subformat) != 2 &&
-		    strcasecmp(options.subformat, "descrypt") &&
-		    strcasecmp(options.subformat, "des")) {
+		if (strlen(tests[0].ciphertext) == 13) {
 			fprintf(stderr, "%s not supported on this system\n",
 			       options.subformat);
 			error();
