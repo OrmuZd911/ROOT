@@ -978,7 +978,7 @@ AGAIN:
 		if (msg_1) {
 			if ((result = benchmark_format(format, 1, &results_1, test_db))) {
 				puts(result);
-				failed++;
+				failed += !event_abort;
 				goto next;
 			}
 #if HAVE_OPENCL
