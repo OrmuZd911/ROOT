@@ -1206,10 +1206,7 @@ int gpg_common_check(unsigned char *keydata, int ks)
 	SHA_CTX ctx;
 	int block_size = 8;
 
-	// out is used for more than just data. So if datalen is 'small', but
-	// other things (like mpz integer creation) are needed, we know that
-	// our sizes will not overflow.
-	out = mem_alloc((gpg_common_cur_salt->datalen) + 0x10000);
+	out = mem_alloc(gpg_common_cur_salt->datalen);
 	// Quick Hack
 	if (!gpg_common_cur_salt->symmetric_mode)
 		memcpy(ivec, gpg_common_cur_salt->iv, gpg_common_blockSize(gpg_common_cur_salt->cipher_algorithm));
@@ -1632,19 +1629,27 @@ bad:
 				unsigned char *p, *q;
 				unsigned int length, pl, ql;
 
+				// b is not used.  So we must free it, or we have a leak.
+				BN_free(b);
+
 				length = 2 + length_of_multi_precision_integer(out);
+				if (length + 4 > gpg_common_cur_salt->datalen)
+					goto bad;
 				pl = length_of_multi_precision_integer(&out[length]);
-				p = &out[length + 2];
 				length += 2 + pl;
+				if (length + 2 > gpg_common_cur_salt->datalen)
+					goto bad;
+				p = &out[length - pl];
 				ql = length_of_multi_precision_integer(&out[length]);
-				q = &out[length + 2];
+				length += 2 + ql;
+				if (length > gpg_common_cur_salt->datalen)
+					goto bad;
+				q = &out[length - ql];
 
 				rsa.n = BN_bin2bn(gpg_common_cur_salt->n, gpg_common_cur_salt->nl, NULL);
 				rsa.p = BN_bin2bn(p, pl, NULL);
 				rsa.q = BN_bin2bn(q, ql, NULL);
 
-				// b is not used.  So we must free it, or we have a leak.
-				BN_free(b);
 				ret = check_rsa_secret_key(&rsa);
 				if (ret != 0) {
 					MEM_FREE(out);
