@@ -1276,10 +1276,8 @@ int gpg_common_check(unsigned char *keydata, int ks)
 
 	if (!gpg_common_cur_salt->symmetric_mode) {
 		num_bits = ((out[0] << 8) | out[1]);
-		if (num_bits < MIN_BN_BITS || num_bits > gpg_common_cur_salt->bits) {
-			MEM_FREE(out);
-			return 0;
-		}
+		if (num_bits < MIN_BN_BITS || num_bits > gpg_common_cur_salt->bits)
+			goto bad;
 	}
 	// Decrypt all data
 	if (!gpg_common_cur_salt->symmetric_mode)
@@ -1390,12 +1388,9 @@ int gpg_common_check(unsigned char *keydata, int ks)
 		SHA1_Init(&ctx);
 		SHA1_Update(&ctx, out, gpg_common_cur_salt->datalen - SHA_DIGEST_LENGTH);
 		SHA1_Final(checksum, &ctx);
-		if (memcmp(checksum, out + gpg_common_cur_salt->datalen - SHA_DIGEST_LENGTH, SHA_DIGEST_LENGTH) == 0) {
-			MEM_FREE(out);
-			return 1;  /* we have a 20 byte verifier ;) */
-		}
-		MEM_FREE(out);
-		return 0;
+		if (memcmp(checksum, out + gpg_common_cur_salt->datalen - SHA_DIGEST_LENGTH, SHA_DIGEST_LENGTH) == 0)
+			goto good; /* we have a 20 byte verifier ;) */
+		goto bad;
 	} else if (gpg_common_cur_salt->symmetric_mode && gpg_common_cur_salt->usage == 9) {
 		int ctb, new_ctb, pkttype, c, partial, lenbytes = 0;
 		unsigned long pktlen;
@@ -1509,11 +1504,7 @@ int gpg_common_check(unsigned char *keydata, int ks)
 			}
 		}
 
-		MEM_FREE(out);
-		return 1;
-bad:
-		MEM_FREE(out);
-		return 0;
+		goto good;
 	}
 
 	// Verify
@@ -1523,12 +1514,9 @@ bad:
 				  SHA1_Init(&ctx);
 				  SHA1_Update(&ctx, out, gpg_common_cur_salt->datalen - SHA_DIGEST_LENGTH);
 				  SHA1_Final(checksum, &ctx);
-				  if (memcmp(checksum, out + gpg_common_cur_salt->datalen - SHA_DIGEST_LENGTH, SHA_DIGEST_LENGTH) == 0) {
-					  MEM_FREE(out);
-					  return 1;  /* we have a 20 byte verifier ;) */
-				  }
-				  MEM_FREE(out);
-				  return 0;
+				  if (memcmp(checksum, out + gpg_common_cur_salt->datalen - SHA_DIGEST_LENGTH, SHA_DIGEST_LENGTH) == 0)
+					goto good; /* we have a 20 byte verifier ;) */
+				  goto bad;
 			  } break;
 		case 0:
 		case 255: {
@@ -1552,18 +1540,15 @@ bad:
 		BIGNUM *b = NULL;
 		uint32_t blen = (num_bits + 7) / 8;
 		int ret;
-		if (gpg_common_cur_salt->datalen == 24 && blen != 20) { /* verifier 1 */
-			MEM_FREE(out);
-			return 0;
-		}
+		if (gpg_common_cur_salt->datalen == 24 && blen != 20) /* verifier 1 */
+			goto bad;
 		if (blen < gpg_common_cur_salt->datalen && ((b = BN_bin2bn(out + 2, blen, NULL)) != NULL)) {
 			char *str = BN_bn2hex(b);
 
 			if (strlen(str) != blen * 2) { /* verifier 2 */
 				OPENSSL_free(str);
 				BN_free(b);
-				MEM_FREE(out);
-				return 0;
+				goto bad;
 			}
 			OPENSSL_free(str);
 
@@ -1601,10 +1586,8 @@ bad:
 				// puts(BN_bn2hex(dsa.pub_key));
 				ret = check_dsa_secret_key(&dsa); /* verifier 3 */
 #endif
-				if (ret != 0) {
-					MEM_FREE(out);
-					return 0;
-				}
+				if (ret != 0)
+					goto bad;
 			}
 			if (gpg_common_cur_salt->pk_algorithm == PKA_ELGAMAL || gpg_common_cur_salt->pk_algorithm == PKA_EG) { /* ElGamal check */
 				ElGamal_secret_key elg;
@@ -1618,10 +1601,8 @@ bad:
 				elg.y = BN_bin2bn(gpg_common_cur_salt->y, gpg_common_cur_salt->yl, NULL);
 				// puts(BN_bn2hex(elg.y));
 				ret = check_elg_secret_key(&elg); /* verifier 3 */
-				if (ret != 0) {
-					MEM_FREE(out);
-					return 0;
-				}
+				if (ret != 0)
+					goto bad;
 			}
 			if (gpg_common_cur_salt->pk_algorithm == PKA_RSA_ENCSIGN) { /* RSA check */
 				RSA_secret_key rsa;
@@ -1651,15 +1632,15 @@ bad:
 				rsa.q = BN_bin2bn(q, ql, NULL);
 
 				ret = check_rsa_secret_key(&rsa);
-				if (ret != 0) {
-					MEM_FREE(out);
-					return 0;
-				}
+				if (ret != 0)
+					goto bad;
 			}
+good:
 			MEM_FREE(out);
 			return 1;
 		}
 	}
+bad:
 	MEM_FREE(out);
 	return 0;
 }
