@@ -254,13 +254,13 @@ void opencl_driver_value(int sequential_id, int *major, int *minor)
 		sizeof(dname), dname, NULL), "clGetDeviceInfo for CL_DRIVER_VERSION");
 
 	p = dname;
-	while (*p && !isdigit((int)*p))
+	while (*p && !isdigit((int)(unsigned char)*p))
 		p++;
 	if (*p) {
 		*major = atoi(p);
-		while (*p && isdigit((int)*p))
+		while (*p && isdigit((int)(unsigned char)*p))
 			p++;
-		while (*p && !isdigit((int)*p))
+		while (*p && !isdigit((int)(unsigned char)*p))
 			p++;
 		if (*p) {
 			*minor = atoi(p);

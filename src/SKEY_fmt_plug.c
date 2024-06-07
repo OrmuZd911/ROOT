@@ -108,7 +108,7 @@ skey_valid(char *ciphertext, struct fmt_main *self)
 	if ((p = strtok(buf, " \t")) == NULL)
 		return 0;
 
-	if (isalpha((unsigned char)(*p))) {
+	if (isalpha((int)(unsigned char)*p)) {
 		if (skey_set_algorithm(p) == NULL)
 			return 0;
 		if ((p = strtok(NULL, " \t")) == NULL)
@@ -116,7 +116,7 @@ skey_valid(char *ciphertext, struct fmt_main *self)
 	}
 
 	for ( ; *p; p++) {
-		if (!isdigit( ((unsigned char)(*p))))
+		if (!isdigit((int)(unsigned char)*p))
 			return 0;
 	}
 	if ((p = strtok(NULL, " \t")) == NULL)
@@ -143,9 +143,9 @@ hex_decode(char *src, unsigned char *dst, int outsize)
 	pe = src + strlen(src);
 	qe = dst + outsize;
 
-	for (p = src, q = dst; p < pe && q < qe && isxdigit((unsigned char)(*p)); p += 2) {
-		ch = tolower((unsigned char)(p[0]));
-		cl = tolower((unsigned char)(p[1]));
+	for (p = src, q = dst; p < pe && q < qe && isxdigit((int)(unsigned char)*p); p += 2) {
+		ch = tolower((int)(unsigned char)p[0]);
+		cl = tolower((int)(unsigned char)p[1]);
 
 		if ((ch >= '0') && (ch <= '9')) ch -= '0';
 		else if ((ch >= 'a') && (ch <= 'f')) ch -= 'a' - 10;
@@ -174,7 +174,7 @@ skey_salt(char *ciphertext)
 	if ((p = strtok(buf, " \t")) == NULL)
 		return (NULL);
 
-	if (isalpha((unsigned char)(*p))) {
+	if (isalpha((int)(unsigned char)*p)) {
 		strnzcpy(salt.type, p, sizeof(salt.type));
 		if ((p = strtok(NULL, " \t")) == NULL)
 			return (NULL);
@@ -204,7 +204,7 @@ static void *get_binary(char *ciphertext)
 	ctcopy = xstrdup(ciphertext);
 	p = strtok(ctcopy, " \t");
 
-	if (isalpha((unsigned char)(*p)))
+	if (isalpha((int)(unsigned char)*p))
 		strtok(NULL, " \t");
 	strtok(NULL, " \t");
 	p = strtok(NULL, " \t");

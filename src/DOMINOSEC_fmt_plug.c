@@ -517,7 +517,7 @@ static int valid(char *ciphertext, struct fmt_main *self)
 
 	for (i = 1; i < CIPHERTEXT_LENGTH-1; ++i) {
 		ch = ciphertext[i];
-		if (!isalnum(ch) && ch != '+' && ch != '/')
+		if (!isalnum((int)ch) && ch != '+' && ch != '/')
 			return 0;
 	}
 

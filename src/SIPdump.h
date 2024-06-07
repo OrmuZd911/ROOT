@@ -185,7 +185,7 @@ int is_binary(const unsigned char *buffer, size_t len)
 	int i;
 
 	for (i = 0; i < len; i++) {
-		if (!isascii(buffer[i]))
+		if (!isascii((int)buffer[i]))
 			return 1;
 	}
 

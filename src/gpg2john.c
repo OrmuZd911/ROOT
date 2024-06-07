@@ -2779,7 +2779,7 @@ base256[] = {
 private int
 line_not_blank(byte *s)
 {
-	while (isspace(*s)) {
+	while (isspace((int)*s)) {
 		if (*s == CR || *s == LF)
 			return NO;
 		s++;

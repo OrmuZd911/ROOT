@@ -454,7 +454,7 @@ int uaf_getuai_info (
     SET_ITEM(item[5], 2, UAIs_ENCRYPT2, &pwd2->alg, 0 );
     SET_ITEM(item[6], 0, 0, 0, 0 );
     for ( i = 0; (i < 12) && username[i]; i++ )
-	pwd->username.s[i] = toupper(username[i]);
+	pwd->username.s[i] = toupper((int)(unsigned char)username[i]);
     pwd->username.s[i] = '\0';
     memcpy (pwd2->username.s, pwd->username.s, sizeof(pwd->username.s));
     if ( acct ) {
