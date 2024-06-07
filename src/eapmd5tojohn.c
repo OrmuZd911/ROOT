@@ -508,8 +508,6 @@ struct eap_hdr {
  * GNU General Public License for more details.
  */
 
-#include <ctype.h>
-
 void to_upper (char *s)
 {
 	char *p;
@@ -517,7 +515,7 @@ void to_upper (char *s)
 
 	offset = 'A' - 'a';
 	for (p = s; *p != '\0'; p++) {
-		if (islower(*p)) {
+		if (*p >= 'a' && *p <= 'z') {
 			*p += offset;
 		}
 	}

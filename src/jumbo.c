@@ -402,15 +402,15 @@ char *strcasestr(const char *haystack, const char *needle) {
 			++H;
 			continue;
 		}
-		if (islower(*N)) {
-			if (*N == tolower(*H)) {
+		if (islower((int)(unsigned char)*N)) {
+			if (*N == tolower((int)(unsigned char)*H)) {
 				if (!fnd) fnd = H;
 				++N;
 				++H;
 				continue;
 			}
-		} else if (isupper(*N)) {
-			if (*N == toupper(*H)) {
+		} else if (isupper((int)(unsigned char)*N)) {
+			if (*N == toupper((int)(unsigned char)*H)) {
 				if (!fnd) fnd = H;
 				++N;
 				++H;

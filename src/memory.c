@@ -366,7 +366,7 @@ void dump_text_msg(const void *msg, const void *in, int len)
 
 	printf("%s : ", (char *)msg);
 	while (len--) {
-		fputc(isprint(*p) ? *p : '.', stdout);
+		fputc(isprint((int)*p) ? *p : '.', stdout);
 		p++;
 	}
 	fputc('\n', stdout);

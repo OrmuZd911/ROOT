@@ -399,8 +399,8 @@ char *prepare_regex(char *regex, int *bCase, char **regex_alpha)
 	cp = str_alloc_copy(regex);
 	cp2 = cp;
 	while (*cp2) {
-		if (isupper((unsigned char)(*cp2)))
-			*cp2 = tolower((unsigned char)(*cp2));
+		if (isupper((int)(unsigned char)*cp2))
+			*cp2 = tolower((int)(unsigned char)*cp2);
 		++cp2;
 	}
 	*bCase = 0;
