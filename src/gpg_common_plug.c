@@ -1050,21 +1050,11 @@ void *gpg_common_get_salt(char *ciphertext)
 	memcpy(ptr, &psalt, sizeof(struct gpg_common_custom_salt*));
 	return (void*)ptr;
 }
-static int give_multi_precision_integer(unsigned char *buf, int len, int *key_bytes, unsigned char *out)
+
+static unsigned int length_of_multi_precision_integer(const unsigned char *buf)
 {
-	int bytes;
-	int i;
-	int bits = buf[len] * 256;
-	len++;
-	bits += buf[len];
-	len++;
-	bytes = (bits + 7) / 8;
-	*key_bytes = bytes;
-
-	for (i = 0; i < bytes; i++)
-		out[i] = buf[len++];
-
-	return bytes + 2;
+	unsigned int bits = ((unsigned int)buf[0] << 8) | buf[1];
+	return (bits + 7) / 8;
 }
 
 // borrowed from "passe-partout" project
@@ -1639,15 +1629,19 @@ bad:
 			if (gpg_common_cur_salt->pk_algorithm == PKA_RSA_ENCSIGN) { /* RSA check */
 				RSA_secret_key rsa;
 				// http://www.ietf.org/rfc/rfc4880.txt
-				int length = 0;
+				unsigned char *p, *q;
+				unsigned int length, pl, ql;
 
-				length += give_multi_precision_integer(out, length, &gpg_common_cur_salt->dl, gpg_common_cur_salt->d);
-				length += give_multi_precision_integer(out, length, &gpg_common_cur_salt->pl, gpg_common_cur_salt->p);
-				length += give_multi_precision_integer(out, length, &gpg_common_cur_salt->ql, gpg_common_cur_salt->q);
+				length = 2 + length_of_multi_precision_integer(out);
+				pl = length_of_multi_precision_integer(&out[length]);
+				p = &out[length + 2];
+				length += 2 + pl;
+				ql = length_of_multi_precision_integer(&out[length]);
+				q = &out[length + 2];
 
 				rsa.n = BN_bin2bn(gpg_common_cur_salt->n, gpg_common_cur_salt->nl, NULL);
-				rsa.p = BN_bin2bn(gpg_common_cur_salt->p, gpg_common_cur_salt->pl, NULL);
-				rsa.q = BN_bin2bn(gpg_common_cur_salt->q, gpg_common_cur_salt->ql, NULL);
+				rsa.p = BN_bin2bn(p, pl, NULL);
+				rsa.q = BN_bin2bn(q, ql, NULL);
 
 				// b is not used.  So we must free it, or we have a leak.
 				BN_free(b);

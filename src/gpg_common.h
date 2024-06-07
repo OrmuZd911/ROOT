@@ -95,8 +95,8 @@ struct gpg_common_custom_salt {
 	int ivlen;
 	int count;
 	void (*s2kfun)(char *, unsigned char*, int);
-	unsigned char p[0x2000]; // gpg --homedir . --s2k-cipher-algo 3des --simple-sk-checksum --gen-key
-	unsigned char q[0x2000]; // those can have larger p and q values.
+	unsigned char p[0x200];
+	unsigned char q[0x200];
 	unsigned char g[0x200];
 	unsigned char y[0x200];
 	unsigned char x[0x200];
