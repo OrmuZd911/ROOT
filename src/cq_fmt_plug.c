@@ -32,9 +32,10 @@ john_register_one(&fmt_cq);
 #define BENCHMARK_COMMENT   ""
 #define BENCHMARK_LENGTH    7
 #define PLAINTEXT_LENGTH    32
-#define SALT_SIZE           64  // XXX double check this
-#define SALT_ALIGN          MEM_ALIGN_NONE
-#define BINARY_SIZE         4
+#define MAX_USERNAME_LENGTH 64
+#define SALT_SIZE           sizeof(struct custom_salt)
+#define SALT_ALIGN          sizeof(uint32_t)
+#define BINARY_SIZE         sizeof(uint32_t)
 #define BINARY_ALIGN        sizeof(uint32_t)
 #define MIN_KEYS_PER_CRYPT  1
 #define MAX_KEYS_PER_CRYPT  4096
@@ -52,10 +53,12 @@ static struct fmt_tests cq_tests[] = {
 };
 
 static char (*saved_key)[PLAINTEXT_LENGTH + 1];
-static uint32_t (*crypt_key)[BINARY_SIZE / sizeof(uint32_t)];
-static char saved_salt[SALT_SIZE];
+static uint32_t *crypt_key;
+static struct custom_salt {
+	uint32_t sum, userlength;
+} saved_salt;
 
-unsigned int AdRandomNumbers[2048] = {
+static const uint32_t AdRandomNumbers[2048] = {
 	0x7aa03f9e, 0x2be5e9c7, 0x1b5ceb7b, 0x32243048, 0x3cb12e04, 0xe90d2e8f, 0xace8842a, 0xdbc021e2,
 	0xdb7e4414, 0x9414168d, 0xec94d186, 0xb0d45b52, 0xefa8a505, 0xee4ac734, 0xee7f3583, 0xf37a1bd0,
 	0x258cd1c7, 0xa93a5bf7, 0x347a23f6, 0xbf68b272, 0x5c89e744, 0x4faa8fc0, 0x54fa4bc1, 0x8f4db7cc,
@@ -313,23 +316,26 @@ unsigned int AdRandomNumbers[2048] = {
 	0x056f3a69, 0x40393f83, 0xffc98a61, 0x80daf387, 0xc6a757b1, 0xa95790e2, 0x1c76cf02, 0xa1450bba,
 	0x3a3150e5, 0x378e9844, 0x7c47420d, 0x617d2066, 0x8cbd025e, 0x252260a0, 0xd7ded568, 0x8e5400d7 };
 
-unsigned int AdEncryptPassword(const char* username, const char* password) {
-	unsigned int userlength;
-	unsigned int passlength;
-	unsigned int a = 0;
-	int i;
+/* FIXME: This treats 8-bit username and password characters as signed - a bug or not? */
 
-	for (i = 0; username[i] != 0; i++) {
-		a += AdRandomNumbers[(i + username[i]) & 0x7ff];
+static void AdProcessSalt(const char *username, const char *end, struct custom_salt *salt)
+{
+	uint32_t i, a = 0;
+	for (i = 0; username[i] != 0 && &username[i] < end; i++) {
+		a += AdRandomNumbers[((int)i + (signed char)username[i]) & 0x7ff];
 	}
-	userlength = i;
+	salt->sum = a;
+	salt->userlength = i;
+}
 
+static uint32_t AdProcessPassword(const char *password) {
+	uint32_t i, a = saved_salt.sum;
 	for (i = 0; password[i] != 0; i++) {
-		a += AdRandomNumbers[(i + password[i] + userlength) & 0x7ff];
+		a += AdRandomNumbers[((int)i + (signed char)password[i] + saved_salt.userlength) & 0x7ff];
 	}
-	passlength = i;
+	uint32_t passlength = i;
 
-	return AdRandomNumbers[(userlength + passlength) & 0x7ff] + a;
+	return AdRandomNumbers[(saved_salt.userlength + passlength) & 0x7ff] + a;
 }
 
 static void init(struct fmt_main *self)
@@ -337,9 +343,9 @@ static void init(struct fmt_main *self)
 	omp_autotune(self, OMP_SCALE);
 
 	saved_key = mem_calloc_align(sizeof(*saved_key),
-		self->params.max_keys_per_crypt, MEM_ALIGN_WORD);
+		self->params.max_keys_per_crypt, MEM_ALIGN_NONE);
 	crypt_key = mem_calloc_align(sizeof(*crypt_key),
-		self->params.max_keys_per_crypt, MEM_ALIGN_WORD);
+		self->params.max_keys_per_crypt, BINARY_ALIGN);
 }
 
 static void done(void)
@@ -361,62 +367,55 @@ static int valid(char *ciphertext, struct fmt_main *self)
 	p[-1] = 0;
 	p = strrchr(p, '$');
 	if (!p)
-		goto Err;
+		goto fail;
 
-	p += 1;
+	p++;
 
-	if (hexlenl(p, &extra)  != BINARY_SIZE * 2 || extra)
-		goto Err;
+	if (hexlenl(p, &extra) != BINARY_SIZE * 2 || extra)
+		goto fail;
 
-	if ((p - q) >= SALT_SIZE || p <= q)
-		goto Err;
+	if (p - q >= MAX_USERNAME_LENGTH || p <= q)
+		goto fail;
 
 	MEM_FREE(tmpstr);
 	return 1;
-Err:;
+
+fail:
 	MEM_FREE(tmpstr);
 	return 0;
 }
 
 static void *get_salt(char *ciphertext)
 {
-	static char salt[SALT_SIZE + 1];
+	static struct custom_salt salt;
 	char *p, *q;
 
-	memset(salt, 0, SALT_SIZE);
 	p = ciphertext + TAG_LENGTH;
 	q = strrchr(p, '$');
-	memcpy(salt, p, q - p);
+	AdProcessSalt(p, q, &salt);
 
-	return salt;
+	return &salt;
 }
 
-static void* get_binary(char *ciphertext)
+static void *get_binary(char *ciphertext)
 {
+	static uint32_t binary;
 	char *p;
-	unsigned int* out = mem_alloc_tiny(BINARY_SIZE, MEM_ALIGN_WORD);
 
 	p = strrchr(ciphertext, '$') + 1;
 
-	*out = (unsigned int)strtoul(p, NULL, 16);
-	return out;
+	binary = (unsigned int)strtoul(p, NULL, 16);
+	return &binary;
 }
 
 static int salt_hash(void *salt)
 {
-    unsigned char *s = salt;
-    unsigned int hash = 5381;
-    unsigned int len = SALT_SIZE;
-
-    while (len-- && *s)
-        hash = ((hash << 5) + hash) ^ *s++;
-
-    return hash & (SALT_HASH_SIZE - 1);
+	return ((struct custom_salt *)salt)->sum & (SALT_HASH_SIZE - 1);
 }
 
 static void set_salt(void *salt)
 {
-	memcpy(saved_salt, salt, SALT_SIZE);
+	memcpy(&saved_salt, salt, sizeof(saved_salt));
 }
 
 static void cq_set_key(char *key, int index)
@@ -437,7 +436,7 @@ static int crypt_all(int *pcount, struct db_salt *salt)
 #pragma omp parallel for
 #endif
 	for (index = 0; index < count; index++)
-		*crypt_key[index] = AdEncryptPassword(saved_salt, saved_key[index]);
+		crypt_key[index] = AdProcessPassword(saved_key[index]);
 
 	return count;
 }
@@ -447,7 +446,7 @@ static int cmp_all(void *binary, int count)
 	int i;
 
 	for (i = 0; i < count; ++i)
-		if ((*(unsigned int*)binary) == *(unsigned int*)crypt_key[i])
+		if (*(uint32_t *)binary == crypt_key[i])
 			return 1;
 
 	return 0;
@@ -455,10 +454,7 @@ static int cmp_all(void *binary, int count)
 
 static int cmp_one(void *binary, int index)
 {
-	if ((*(unsigned int*) binary) == *(unsigned int*) crypt_key[index])
-		return 1;
-
-	return 0;
+	return *(uint32_t *)binary == crypt_key[index];
 }
 
 static int cmp_exact(char *source, int index)
