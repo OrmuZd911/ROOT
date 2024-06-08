@@ -767,7 +767,9 @@ AGAIN:
  * of platforms and devices, option parsing) is performed only once.
 */
 			if (strstr(format->params.label, "-opencl")) {
+				benchmark_running++;
 				opencl_load_environment();
+				benchmark_running--;
 
 				if (get_number_of_available_devices() == 0)
 					continue;
