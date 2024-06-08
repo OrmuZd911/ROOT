@@ -99,16 +99,12 @@ struct gpg_common_custom_salt {
 	unsigned char q[0x200];
 	unsigned char g[0x200];
 	unsigned char y[0x200];
-	unsigned char x[0x200];
 	unsigned char n[0x200];
-	unsigned char d[0x200];
 	int pl;
 	int ql;
 	int gl;
 	int yl;
-	int xl;
 	int nl;
-	int dl;
 	int symmetric_mode;
 	unsigned char data[1];
 };
