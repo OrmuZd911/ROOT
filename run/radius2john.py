@@ -6,7 +6,7 @@
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted.
 
-# This script is essentially a python version of radius2john.pl written by Didier ARENZANA. 
+# This script is essentially a python version of radius2john.pl written by Didier ARENZANA.
 # The previous version of radius2john.py was written by Maxime GOYETTE <maxgoyette0-at-gmail.com>
 
 # ---
@@ -55,7 +55,7 @@ def process_packet(args, packet):
         ip_layer = packet[scapy.IP]
         udp_layer = packet[scapy.UDP]
 
-        if udp_layer.dport in [1812, 1813] or udp_layer.sport in [1812, 1813]: 
+        if udp_layer.dport in [1812, 1813] or udp_layer.sport in [1812, 1813]:
             process_radius(args, ip_layer, bytes(udp_layer.payload))
 
 
@@ -138,17 +138,17 @@ if __name__ == "__main__":
     We don't need to try authentications. Just sniff the radius packets in a pcap file.
     This script reads the pcap file, matches radius responses with the corresponding all_requests,
     and dumps md5 and salt as needed.
-    		""")
+    """)
 
     parser.add_argument('-f', '--file', type=str, required=True, nargs='+')
     parser.add_argument('--single', help='To get only one hash per client IPs', action='store_true', default=False)
     parser.add_argument('-l', '--login', type=str,help='User login used for the 3.3 attack')
     parser.add_argument('-p', '--password', type=str, help='User password used for the 3.3 attack')
-    
+
     parsed_args = parser.parse_args()
     args = vars(parsed_args)
 
-    if args["login"] is not None and args["password"] is None: 
+    if args["login"] is not None and args["password"] is None:
         # Attack 3.3 can work without login verification (if there is only one client, there is no point), but cannot work without a password
         print("You must specify the password used by the client for the '3.3 User-Password Attribute Based Shared Secret Attack'")
         print("Basic Usage: ./radius2john.py -f <pcap files>")
