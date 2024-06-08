@@ -1,68 +1,162 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
-# This software is Copyright (c) 2019 Maxime GOYETTE <maxgoyette0-at-gmail.com>,
+# This software is Copyright (c) 2024, k4amos <k4amos at proton.me>
 # and it is hereby released to the general public under the following terms:
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted.
-#
+
+# This script is essentially a python version of radius2john.pl written by Didier ARENZANA. 
+# The previous version of radius2john.py was written by Maxime GOYETTE <maxgoyette0-at-gmail.com>
+
+# ---
+
 # Utility to bruteforce RADIUS shared-secret
-# Usage: ./radius2john.py <pcap files>
+# Usage: ./radius2john.py -f <pcap files>
 #
 # This script depends on Scapy (https://scapy.net)
 # To install: pip install --user scapy
 
+# ---
+
+# Application of two  methods described in http://www.untruth.org/~josh/security/radius/radius-auth.html :
+# "3.3 User-Password Attribute Based Shared Secret Attack"
+# "3.1 Response Authenticator Based Shared Secret Attack"
+
+# For attack 3.3 :
+# We try authentications using a known password, and sniff the radius packets to a pcap file.
+# This script reads access-request in the pcap file, and dumps the md5(RA+secret) and RA, in a john-friendly format.
+
+# For attack 3.1:
+# We don't need to try authentications. Just sniff the radius packets in a pcap file.
+# This script reads the pcap file, matches radius responses with the corresponding all_requests,
+# and dumps md5 and salt as needed.
+
+import binascii
+import sys
+import argparse
+
 try:
-    from scapy.all import *
+    import scapy.all as scapy
 except ImportError:
-    print("scapy is missing, run 'pip install --user scapy' to install it!")
-    exit(1)
+    print(
+        "Scapy seems to be missing, run 'pip install --user scapy' to install it"
+    )
+    sys.exit(1)
 
-from binascii import hexlify
-from sys import argv
-import os
+def read_file(args, filename):
+    packets = scapy.rdpcap(filename)
+    for packet in packets:
+        process_packet(args, packet)
 
-if len(argv) < 2:
-    print('Usage: ./radius2john.py <pcap files>')
-    exit(1)
 
-filenames = argv[1:]
+def process_packet(args, packet):
+    if packet.haslayer(scapy.IP) and packet.haslayer(scapy.UDP):
+        ip_layer = packet[scapy.IP]
+        udp_layer = packet[scapy.UDP]
 
-for filename in filenames:
+        if udp_layer.dport in [1812, 1813] or udp_layer.sport in [1812, 1813]: 
+            process_radius(args, ip_layer, bytes(udp_layer.payload))
 
-    capture_file = rdpcap(filename)
 
-    accounting_request_packets = {}
-    accounting_response_packets = {}
+def process_radius(args, ip, udpdata):
+    radius_packet = scapy.Radius(udpdata)
 
-    for packet in capture_file:
+    if radius_packet.code in [1, 4]:  # Access-Request, Accounting-Request
 
-        if Radius in packet:
-            src_ip = packet[IP].src
-            dst_ip = packet[IP].dst
+        if args['password'] is not None:
 
-            if packet[Radius].code == 4 and not (src_ip, dst_ip) in accounting_request_packets:
-                accounting_request_packets[(src_ip, dst_ip)] = packet
-            elif packet[Radius].code == 5 and not (dst_ip, src_ip) in accounting_response_packets:
-                accounting_response_packets[(dst_ip, src_ip)] = packet
+            user_name, user_hash = None, None
 
-    for ips, packet in accounting_response_packets.items():
-        if ips in accounting_request_packets:
-            code = hex(packet[Radius].code)[2:].zfill(2)
-            identifier = hex(packet[Radius].id)[2:].zfill(2)
-            length = hex(packet[Radius].len)[2:].zfill(4)
-            authenticator = hexlify(accounting_request_packets[ips][Radius].authenticator).decode('utf-8')
+            for attr in radius_packet.attributes:
+                if attr.name == "User-Name":
+                    user_name = attr.value.decode("utf-8")
 
-            salt = code + identifier + length + authenticator
+                if attr.name == "User-Password":
+                    user_hash = attr.value
 
-            hash_content = hexlify(packet[Radius].authenticator).decode('utf-8')
-            hash_type = 1009 if len(salt) <= 16 else 1017
+            if user_hash is not None:
+                if args['login'] is None or user_name == args['login']:
+                    dump_access_request(
+                        args, ip.src, radius_packet.authenticator, user_hash
+                    )
 
-            file_path = os.path.abspath(filename)
+        all_requests[f"{ip.src}-{radius_packet.id}"] = radius_packet.authenticator
 
-            print('{ip}({file_path}):$dynamic_{type}${hash}$HEX${salt}'.format(
-                file_path=file_path,
-                ip=ips[1],
-                type=hash_type,
-                hash=hash_content,
-                salt=salt
-            ))
+    elif radius_packet.code in [2, 11, 3, 5]:  # Access-Accept, Access-Challenge, Access-Reject, Accounting-Response
+        key = f"{ip.dst}-{radius_packet.id}"
+        if key in all_requests:
+            dump_response(args, ip.dst, all_requests[key], radius_packet.authenticator, udpdata)
+
+
+def dump_response(args, ip, req_ra, ra, udpdata):  # 3.1 attack
+    if args["single"] and ip in dumped_ips:
+        return
+
+    salt = bytearray(udpdata)
+    salt[4:20] = req_ra  # Replace Response Authenticator with the Request Authenticator
+
+    response_type = "1009" if len(salt) <= 16 else "1017"
+    print(
+        f"{ip}:$dynamic_{response_type}${binascii.hexlify(ra).decode()}$HEX${binascii.hexlify(salt).decode('utf-8')}"
+    )
+
+    dumped_ips[ip] = "reply"
+
+
+def dump_access_request(args, ip, ra, hashed):  # 3.3 attack
+    if args["single"] and ip in dumped_ips and dumped_ips[ip] == "request":
+        return
+
+    xor_result = bytes(a ^ b for a, b in zip(hashed, args['password'][:16].encode('utf-8').ljust(16, b'\x00')))
+
+    print(
+        f"{ip}:$dynamic_1008${binascii.hexlify(xor_result).decode()}$HEX${binascii.hexlify(ra).decode('utf-8')}"
+    )
+
+    dumped_ips[ip] = "request"
+
+
+if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,epilog=
+    """
+    ### Utility to bruteforce RADIUS shared-secret written by k4amos
+    Basic Usage: ./radius2john.py -f <pcap files>"
+
+    ---
+
+    Application of two  methods described in http://www.untruth.org/~josh/security/radius/radius-auth.html :
+    - "3.3 User-Password Attribute Based Shared Secret Attack"
+    - "3.1 Response Authenticator Based Shared Secret Attack"
+
+    # For attack 3.3 :
+    We try authentications using a known password, and sniff the radius packets to a pcap file.
+    This script reads access-request in the pcap file, and dumps the md5(RA+secret) and RA, in a john-friendly format.
+
+    # For attack 3.1:
+    We don't need to try authentications. Just sniff the radius packets in a pcap file.
+    This script reads the pcap file, matches radius responses with the corresponding all_requests,
+    and dumps md5 and salt as needed.
+    		""")
+
+    parser.add_argument('-f', '--file', type=str, required=True, nargs='+')
+    parser.add_argument('--single', help='To get only one hash per client IPs', action='store_true', default=False)
+    parser.add_argument('-l', '--login', type=str,help='User login used for the 3.3 attack')
+    parser.add_argument('-p', '--password', type=str, help='User password used for the 3.3 attack')
+    
+    parsed_args = parser.parse_args()
+    args = vars(parsed_args)
+
+    if args["login"] is not None and args["password"] is None: 
+        # Attack 3.3 can work without login verification (if there is only one client, there is no point), but cannot work without a password
+        print("You must specify the password used by the client for the '3.3 User-Password Attribute Based Shared Secret Attack'")
+        print("Basic Usage: ./radius2john.py -f <pcap files>")
+        print("You can specify '-h' to display help")
+        sys.exit(1)
+
+    all_requests = {}
+    dumped_ips = {}
+
+    for filename in args['file']:
+        read_file(args, filename)
