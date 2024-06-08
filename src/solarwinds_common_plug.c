@@ -11,9 +11,10 @@
 #define HASH_LENGTH 88
 
 struct fmt_tests solarwinds_tests[] = {
-        {"$solarwinds$0$admin$/+PA4Zck3arkLA7iwWIugnAEoq4ocRsYjF7lzgQWvJc+pepPz2a5z/L1Pz3c366Y/CasJIa7enKFDPJCWNiKRg==", ""},
-        {"$solarwinds$0$admin$5BqFpldsj5H9nbkkLjB+Cdi7WCXiUp5zBpO9Xs7/MKnnQAI0IE9gH+58LlS7/+a/7x1wWScI2iCGEtukgTiNeA==", "letmein"},
-        {NULL}
+	{"$solarwinds$0$admin$/+PA4Zck3arkLA7iwWIugnAEoq4ocRsYjF7lzgQWvJc+pepPz2a5z/L1Pz3c366Y/CasJIa7enKFDPJCWNiKRg==", ""},
+	{"$solarwinds$0$ADMIN$5BqFpldsj5H9nbkkLjB+Cdi7WCXiUp5zBpO9Xs7/MKnnQAI0IE9gH+58LlS7/+a/7x1wWScI2iCGEtukgTiNeA==", "letmein"},
+	{"$solarwinds$0$admin$fj4EBQewCQUZ7IYHl0qL8uj9kQSBb3m7N4u0crkKK0Uj9rbbAnSrBZMXO7oWx9KqL3sCzwncvPZ9hyDV9QCFTg==", "hashcat"},
+	{NULL}
 };
 
 int solarwinds_valid(char *ciphertext, struct fmt_main *self)
@@ -77,6 +78,7 @@ void *solarwinds_get_salt(char *ciphertext)
         p = strtokm(ctcopy, "$");
         p = strtokm(NULL, "$");
 
+	strlwr(p);
 	strncpy(cs.salt, p, 8);
 
 	if (strlen(p) < 8)
