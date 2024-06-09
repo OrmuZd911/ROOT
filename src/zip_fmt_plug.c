@@ -141,7 +141,7 @@ static int crypt_all(int *pcount, struct db_salt *salt)
 		pbkdf2_sha1_sse((const unsigned char **)pin, lens, saved_salt->salt, SALT_LENGTH(saved_salt->v.mode),
 		                KEYING_ITERATIONS, pout, BLK_SZ, early_skip);
 		for (i = 0; i < MIN_KEYS_PER_CRYPT; ++i)
-			if (!memcmp(pwd_ver[i] + 2 * key_len - late_skip, saved_salt->passverify, 2))
+			if (!memcmp(pwd_ver[i] + (2 * key_len - late_skip), saved_salt->passverify, 2))
 				something_hit = hits[i] = 1;
 		if (something_hit) {
 			for (i = 0; i < MIN_KEYS_PER_CRYPT; ++i)
