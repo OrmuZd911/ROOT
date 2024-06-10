@@ -45,7 +45,7 @@
 #endif
 #include "arch.h"
 
-#if ARCH_ALLOWS_UNALIGNED || __ARM_FEATURE_UNALIGNED
+#if ARCH_ALLOWS_UNALIGNED || __ARM_FEATURE_UNALIGNED || (WITH_UBSAN && (__amd64__ || __x86_64 || __x86_64__))
 
 #if FMT_EXTERNS_H
 extern struct fmt_main fmt_rar;
