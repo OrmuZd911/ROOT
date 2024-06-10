@@ -543,7 +543,7 @@ static void pbkdf2(unsigned int _key[]) // key is also 'final' digest.
 static int crypt_all(int *pcount, struct db_salt *salt)
 {
 	int count = *pcount;
-	int i, t, t1;
+	int i, t1;
 	// Note, for a format like DCC2, there is little reason to optimize anything other
 	// than the pbkdf2 inner loop.  The one exception to that, is the NTLM can be done
 	// and known when to be done, only when the
@@ -574,13 +574,13 @@ static int crypt_all(int *pcount, struct db_salt *salt)
 #if defined(WITH_UBSAN)
 #pragma omp parallel for
 #else
-#pragma omp parallel for default(none) private(t) shared(count, salt_buffer, salt_len, crypt_out, md4hash)
+#pragma omp parallel for default(none) shared(count, salt_buffer, salt_len, crypt_out, md4hash)
 #endif
 #endif
 	for (t1 = 0; t1 < count; t1 += MS_NUM_KEYS)	{
 		MD4_CTX ctx;
 		int i;
-		t = t1 / MS_NUM_KEYS;
+		int t = t1 / MS_NUM_KEYS;
 		for (i = 0; i < MS_NUM_KEYS; ++i) {
 			// Get DCC1.  That is MD4( NTLM . unicode(lc username) )
 			MD4_Init(&ctx);
