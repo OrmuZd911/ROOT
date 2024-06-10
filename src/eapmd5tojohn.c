@@ -10,7 +10,6 @@
 #include <signal.h>
 #include <pcap.h>
 #include <errno.h>
-#include <getopt.h>
 
 #include "md5.h"
 

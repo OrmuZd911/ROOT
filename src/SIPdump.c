@@ -26,6 +26,8 @@
 #include <stdlib.h>
 #if (!AC_BUILT || HAVE_UNISTD_H) && !_MSC_VER
 #include <unistd.h>
+#else
+#include <getopt.h>
 #endif
 #include <errno.h>
 #if HAVE_SYS_SOCKET_H
@@ -56,8 +58,8 @@
 #elif HAVE_PCAP_PCAP_H
 #include <pcap/pcap.h>
 #endif
-#include <getopt.h>
 
+#include "arch.h"
 #include "SIPdump.h"
 
 #define SIP_LINE_LEN   1024	/* Maximum length of SIP protocol lines */
