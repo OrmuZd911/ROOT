@@ -237,7 +237,7 @@ static void set_key(char *_key, int index)
 	new_keys = 1;
 
 #if !ARCH_LITTLE_ENDIAN
-	alter_endianity_w16(saved_key[index], len<<1);
+	alter_endianity_w16(&saved_key[index], len<<1);
 #endif
 #endif
 }
