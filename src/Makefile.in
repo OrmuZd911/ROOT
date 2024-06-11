@@ -45,6 +45,9 @@ srcdir = @srcdir@
 prefix = @prefix@
 F = ""
 
+JTR_RELEASE_GIT_HEAD_TS = \" $(shell git show -s --format=%cs HEAD 2>/dev/null)\"
+JTR_RELEASE_GIT_COMMIT = \" $(shell git rev-parse --short=10 HEAD 2>/dev/null)\"
+
 JTR_GIT_COMMIT = \"-$(shell git rev-parse --short=10 HEAD 2>/dev/null)\"
 ifeq ($(JTR_GIT_COMMIT), \"-\")
 # this format string will be replaced by git archive:
@@ -558,6 +561,7 @@ version.h: find_version
 
 find_version:
 	echo "#define JTR_GIT_VERSION $(JTR_GIT_VERSION)" > version.h.new
+	echo "#define JTR_RELEASE_VERSION $(JTR_RELEASE_GIT_COMMIT) $(JTR_RELEASE_GIT_HEAD_TS)" >> version.h.new
 	diff >/dev/null 2>/dev/null version.h.new version.h && $(RM) version.h.new || $(MV) version.h.new version.h
 
 SUBDIRS = aes secp256k1 ed25519-donna poly1305-donna @ZTEX_SUBDIRS@

@@ -1,6 +1,6 @@
 /*
  * This file is part of John the Ripper password cracker,
- * Copyright (c) 1996-2019 by Solar Designer
+ * Copyright (c) 1996-2024 by Solar Designer
  *
  * ...with changes in the jumbo patch, by various authors
  *
@@ -26,22 +26,22 @@
 /*
  * John's version number.
  */
-#define JOHN_VERSION			"1.9.0"
+#define JOHN_VERSION			"1.9.1"
 
 /*
  * Define this for release tarballs. It affects the version reporting (will
  * be the string above and below and never a Git hash).
  */
-//#define JTR_RELEASE_BUILD 1
+#define JTR_RELEASE_BUILD 1
 
 /*
  * Jumbo's version number. Note that we must uncomment JTR_RELEASE_BUILD
  * above, in any release tar-balls (and only then, never ever in Git).
  */
-#define JUMBO_POSTFIX			"-jumbo-1"
+#define JUMBO_POSTFIX			"-ce"
 
 #if JTR_RELEASE_BUILD
-#define JUMBO_VERSION			JOHN_VERSION JUMBO_POSTFIX
+#define JUMBO_VERSION			JOHN_VERSION JUMBO_POSTFIX JTR_RELEASE_VERSION
 #else
 #define JUMBO_VERSION			JOHN_VERSION JUMBO_POSTFIX "+bleeding"
 #endif
