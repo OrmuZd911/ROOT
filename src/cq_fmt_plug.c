@@ -316,13 +316,18 @@ static const uint32_t AdRandomNumbers[2048] = {
 	0x056f3a69, 0x40393f83, 0xffc98a61, 0x80daf387, 0xc6a757b1, 0xa95790e2, 0x1c76cf02, 0xa1450bba,
 	0x3a3150e5, 0x378e9844, 0x7c47420d, 0x617d2066, 0x8cbd025e, 0x252260a0, 0xd7ded568, 0x8e5400d7 };
 
-/* FIXME: This treats 8-bit username and password characters as signed - a bug or not? */
+/*
+ * The original cqcoreutil.dll uses 16-bit characters, probably expecting
+ * UCS-2, yet our implementation is not encoding-aware.  Our usage of
+ * "unsigned char" here should be equivalent to UCS-2 with high byte 0,
+ * which should work well for input in iso-8859-1 and for most of cp1252.
+ */
 
 static void AdProcessSalt(const char *username, const char *end, struct custom_salt *salt)
 {
 	uint32_t i, a = 0;
 	for (i = 0; username[i] != 0 && &username[i] < end; i++) {
-		a += AdRandomNumbers[((int)i + (signed char)username[i]) & 0x7ff];
+		a += AdRandomNumbers[(i + (unsigned char)username[i]) & 0x7ff];
 	}
 	salt->sum = a;
 	salt->userlength = i;
@@ -331,7 +336,7 @@ static void AdProcessSalt(const char *username, const char *end, struct custom_s
 static uint32_t AdProcessPassword(const char *password) {
 	uint32_t i, a = saved_salt.sum;
 	for (i = 0; password[i] != 0; i++) {
-		a += AdRandomNumbers[((int)i + (signed char)password[i] + saved_salt.userlength) & 0x7ff];
+		a += AdRandomNumbers[(i + (unsigned char)password[i] + saved_salt.userlength) & 0x7ff];
 	}
 	uint32_t passlength = i;
 
