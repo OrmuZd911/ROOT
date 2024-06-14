@@ -145,6 +145,8 @@
 #define SHA3_384_Init(hash)         Keccak_HashInitialize(hash,  832,  768, 384, 0x06)
 #define SHA3_512_Init(hash)         Keccak_HashInitialize(hash,  576, 1024, 512, 0x06)
 
+#include "sm3.h"
+#define sm3_final(a,b) sm3_final(b,a)
 
 #ifdef _OPENMP
 #include <omp.h>

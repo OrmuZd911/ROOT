@@ -97,6 +97,7 @@ static DYNAMIC_primitive_funcp _Funcs_1[] =
 #include "sha.h"
 #include "sha2.h"
 #include "gost.h"
+#include "sm3.h"
 #include "sph_haval.h"
 #include "sph_ripemd.h"
 #include "sph_tiger.h"
@@ -1774,6 +1775,7 @@ static int crypt_all(int *pcount, struct db_salt *salt)
 						CASE(KECCAK_256);
 						CASE(KECCAK_384);
 						CASE(KECCAK_512);
+						CASE(SM3);
 						// LARGE_HASH_EDIT_POINT
 					}
 				} else if (curdat.store_keys_normal_but_precompute_hash_to_output2_base16_to_input1_offsetX) {
@@ -1831,6 +1833,7 @@ static int crypt_all(int *pcount, struct db_salt *salt)
 						CASE(KECCAK_256);
 						CASE(KECCAK_384);
 						CASE(KECCAK_512);
+						CASE(SM3);
 						// LARGE_HASH_EDIT_POINT
 					}
 				} else {
@@ -2559,6 +2562,16 @@ static void *get_salt(char *ciphertext)
 			KECCAK_CASE(KECCAK_256,32)
 			KECCAK_CASE(KECCAK_384,48)
 			KECCAK_CASE(KECCAK_512,64)
+			case MGF__SM3:
+			{
+				sm3_ctx ctx;
+				sm3_init(&ctx);
+				sm3_update(&ctx, (const unsigned char*)Salt, slen);
+				sm3_final(&ctx, (unsigned char*)Buf);
+				memset(Salt, 0, SALT_SIZE+1);
+				base64_convert(Buf, e_b64_raw, 32, Salt, e_b64_hex, SALT_SIZE, 0, 0);
+				break;
+			}
 			// LARGE_HASH_EDIT_POINT
 
 			default:
@@ -7400,6 +7413,10 @@ static int isKECCAKFunc(DYNAMIC_primitive_funcp p) {
 	RETURN_TRUE_IF_BIG_FUNC(KECCAK_512);
 	return 0;
 }
+static int isSM3Func(DYNAMIC_primitive_funcp p) {
+	RETURN_TRUE_IF_BIG_FUNC(SM3);
+	return 0;
+}
 // LARGE_HASH_EDIT_POINT  (Add a new IsXXXFunc() type function)
 
 static int isLargeHashFinalFunc(DYNAMIC_primitive_funcp p)
@@ -7413,7 +7430,7 @@ static int isLargeHashFinalFunc(DYNAMIC_primitive_funcp p)
 		IF(HAVAL192_3)||IF(HAVAL192_4)||IF(HAVAL192_5)||IF(HAVAL224_3)||IF(HAVAL224_4)||IF(HAVAL224_5)||
 		IF(HAVAL256_3)||IF(HAVAL256_4)||IF(HAVAL256_5)||IF(MD2)||IF(PANAMA)||IF(SKEIN224)||IF(SKEIN256)||
 		IF(SKEIN384)||IF(SKEIN512)||IF(SHA3_224)||IF(SHA3_256)||IF(SHA3_384)||IF(SHA3_512)||
-		IF(KECCAK_224)||IF(KECCAK_256)||IF(KECCAK_384)||IF(KECCAK_512))
+		IF(KECCAK_224)||IF(KECCAK_256)||IF(KECCAK_384)||IF(KECCAK_512)||IF(SM3))
 		// LARGE_HASH_EDIT_POINT
 		return 1;
 	return 0;
@@ -7802,6 +7819,7 @@ int dynamic_SETUP(DYNAMIC_Setup *Setup, struct fmt_main *pFmt)
 	IF_CDOFF32(SKEIN224,56); IF_CDOFF32(SKEIN256,64); IF_CDOFF32(SKEIN384,96); IF_CDOFF32(SKEIN512,128);
 	IF_CDOFF32(SHA3_224,56); IF_CDOFF32(SHA3_256,64); IF_CDOFF32(SHA3_384,96); IF_CDOFF32(SHA3_512,128);
 	IF_CDOFF32(KECCAK_224,56); IF_CDOFF32(KECCAK_256,64); IF_CDOFF32(KECCAK_384,96); IF_CDOFF32(KECCAK_512,128);
+	IF_CDOFF32(SM3,64);
 	// LARGE_HASH_EDIT_POINT
 
 	if (curdat.store_keys_normal_but_precompute_hash_to_output2_base16_to_input1_offsetX)
@@ -7979,7 +7997,7 @@ int dynamic_SETUP(DYNAMIC_Setup *Setup, struct fmt_main *pFmt)
 //				IS_FUNC_NAME(KECCAK,SHA3_512)
 //				IS_FUNC_NAME(KECCAK,KECCAK_256)
 //				IS_FUNC_NAME(KECCAK,KECCAK_512)
-
+				IS_FUNC_NAME(SM3,SM3)
 				// LARGE_HASH_EDIT_POINT  (MUST match the just added a new IsXXXFunc() type function)
 			}
 			if (isLargeHashFinalFunc(curdat.dynamic_FUNCTIONS[j-1]))

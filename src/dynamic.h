@@ -105,6 +105,7 @@ typedef struct DYNAMIC_Constants_t
 #define MGF__KECCAK_512  0x28
 #define MGF__KECCAK_224  0x29
 #define MGF__KECCAK_384  0x2a
+#define MGF__SM3         0x2b
 // LARGE_HASH_EDIT_POINT
 
 // These are the 'flags' that specify certain characterstics of the format.
@@ -168,6 +169,7 @@ typedef struct DYNAMIC_Constants_t
 #define MGF_SALT_AS_HEX_KECCAK_512  ((((uint64_t)MGF__KECCAK_512)<<56)|MGF_SALT_AS_HEX)
 #define MGF_SALT_AS_HEX_KECCAK_224  ((((uint64_t)MGF__KECCAK_224)<<56)|MGF_SALT_AS_HEX)
 #define MGF_SALT_AS_HEX_KECCAK_384  ((((uint64_t)MGF__KECCAK_384)<<56)|MGF_SALT_AS_HEX)
+#define MGF_SALT_AS_HEX_SM3         ((((uint64_t)MGF__SM3       )<<56)|MGF_SALT_AS_HEX)
 // LARGE_HASH_EDIT_POINT
 
 #define MGF_INPBASE64_4x6            0x00000200
@@ -253,6 +255,7 @@ typedef struct DYNAMIC_Constants_t
 #define MGF_KEYS_BASE16_IN1_KECCAK_512  ((((uint64_t)MGF__KECCAK_512)<<56)|MGF_KEYS_BASE16_IN1)
 #define MGF_KEYS_BASE16_IN1_KECCAK_224  ((((uint64_t)MGF__KECCAK_224)<<56)|MGF_KEYS_BASE16_IN1)
 #define MGF_KEYS_BASE16_IN1_KECCAK_384  ((((uint64_t)MGF__KECCAK_384)<<56)|MGF_KEYS_BASE16_IN1)
+#define MGF_KEYS_BASE16_IN1_SM3         ((((uint64_t)MGF__SM3       )<<56)|MGF_KEYS_BASE16_IN1)
 // LARGE_HASH_EDIT_POINT
 
 #define MGF_KEYS_BASE16_IN1_Offset32          0x00000008   // deprecated (use the _MD5 version)
@@ -301,6 +304,7 @@ typedef struct DYNAMIC_Constants_t
 #define MGF_KEYS_BASE16_IN1_Offset_KECCAK_512 ((((uint64_t)MGF__KECCAK_512)<<56)|MGF_KEYS_BASE16_IN1_Offset32)
 #define MGF_KEYS_BASE16_IN1_Offset_KECCAK_224 ((((uint64_t)MGF__KECCAK_224)<<56)|MGF_KEYS_BASE16_IN1_Offset32)
 #define MGF_KEYS_BASE16_IN1_Offset_KECCAK_384 ((((uint64_t)MGF__KECCAK_384)<<56)|MGF_KEYS_BASE16_IN1_Offset32)
+#define MGF_KEYS_BASE16_IN1_Offset_SM3        ((((uint64_t)MGF__SM3       )<<56)|MGF_KEYS_BASE16_IN1_Offset32)
 // LARGE_HASH_EDIT_POINT
 
 //#define MGF_KEYS_BASE16_X86_IN1          0x00000010
@@ -640,6 +644,7 @@ LARGE_HASH_FUNCTION_DECLARAION(KECCAK_256);
 LARGE_HASH_FUNCTION_DECLARAION(KECCAK_512);
 LARGE_HASH_FUNCTION_DECLARAION(KECCAK_224);
 LARGE_HASH_FUNCTION_DECLARAION(KECCAK_384);
+LARGE_HASH_FUNCTION_DECLARAION(SM3);
 // LARGE_HASH_EDIT_POINT
 
 // These dump the raw crypt back into input (only at the head of it).
