@@ -289,6 +289,9 @@ typedef struct private_subformat_data
 
 #define ALGORITHM_NAME_KECCAK     "64/"ARCH_BITS_STR " keccak"
 #define ALGORITHM_NAME_X86_KECCAK "64/"ARCH_BITS_STR " keccak"
+
+#define ALGORITHM_NAME_SM3     "32/"ARCH_BITS_STR " sm3"
+#define ALGORITHM_NAME_X86_SM3 "32/"ARCH_BITS_STR " sm3"
 // LARGE_HASH_EDIT_POINT
 
 #ifndef SIMD_COEF_32
