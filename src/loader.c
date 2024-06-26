@@ -453,8 +453,8 @@ static MAYBE_INLINE int ldr_check_shells(struct list_main *list, char *shell)
 
 void ldr_set_encoding(struct fmt_main *format)
 {
-	if ((!options.target_enc || options.default_target_enc) &&
-	    !options.internal_cp) {
+	if (!options.loader.showformats &&
+	    (!options.target_enc || options.default_target_enc) && !options.internal_cp) {
 		if (!strncasecmp(format->params.label, "LM", 2) ||
 		    !strcasecmp(format->params.label, "netlm") ||
 		    !strcasecmp(format->params.label, "nethalflm")) {
