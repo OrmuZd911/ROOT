@@ -116,12 +116,13 @@ char *pbkdf2_hmac_md4_split(char *ciphertext, int index, struct fmt_main *self)
 {
 	static char out[PBKDF2_MD4_MAX_CIPHERTEXT_LENGTH + 1];
 	char *cp;
+
 	strnzcpylwr(out, ciphertext, sizeof(out));
-	cp = strchr(out, '.');
-	while (cp) {
+
+	cp = out;
+	while ((cp = strchr(cp, '.')))
 		*cp = '$';
-		cp = strchr(cp, '.');
-	}
+
 	return out;
 }
 
@@ -261,12 +262,13 @@ error:
 char *pbkdf2_hmac_md5_split(char *ciphertext, int index, struct fmt_main *self) {
 	static char out[PBKDF2_MD5_MAX_CIPHERTEXT_LENGTH + 1];
 	char *cp;
+
 	strnzcpylwr(out, ciphertext, sizeof(out));
-	cp = strchr(out, '.');
-	while (cp) {
+
+	cp = out;
+	while ((cp = strchr(cp, '.')))
 		*cp = '$';
-		cp = strchr(cp, '.');
-	}
+
 	return out;
 }
 
@@ -419,11 +421,11 @@ char *pbkdf2_hmac_sha1_split(char *ciphertext, int index, struct fmt_main *self)
 	char *cp;
 
 	strnzcpylwr(out, ciphertext, sizeof(out));
-	cp = strchr(out, '.');
-	while (cp) {
+
+	cp = out;
+	while ((cp = strchr(cp, '.')))
 		*cp = '$';
-		cp = strchr(cp, '.');
-	}
+
 	return out;
 }
 
@@ -638,17 +640,37 @@ char *pbkdf2_hmac_sha256_prepare(char *fields[10], struct fmt_main *self) {
 	static char Buf[PBKDF2_SHA256_MAX_CIPHERTEXT_LENGTH + 1];
 	char tmp[43+1], *cp;
 
+	// MIME Base64, optionally with escaped slashes. Trailing '=' is also optional.
+	if (!strncmp(fields[1], PBKDF2_SHA256_FORMAT_TAG, PBKDF2_SHA256_TAG_LEN)) {
+		if (strchr(fields[1], '\\') || strchr(fields[1], '=') || strchr(fields[1], '+')) {
+			strcpy(Buf, fields[1]);
+
+			cp = Buf;
+			while ((cp = strchr(cp, '\\')))
+				memmove(cp, cp + 1, strlen(cp));
+
+			cp = Buf;
+			while ((cp = strchr(cp, '=')))
+				memmove(cp, cp + 1, strlen(cp));
+
+			cp = Buf;
+			while ((cp = strchr(cp, '+')))
+				*cp = '.';
+
+			return Buf;
+		}
+	}
 	if (strncmp(fields[1], FORMAT_TAG_CISCO8, FORMAT_TAG_CISCO8_LEN) != 0)
 		return fields[1];
 	if (strlen(fields[1]) != 4+14+43)
 		return fields[1];
 	sprintf(Buf, "%s20000$%14.14s$%s", PBKDF2_SHA256_FORMAT_TAG, &(fields[1][FORMAT_TAG_CISCO8_LEN]),
 		base64_convert_cp(&(fields[1][FORMAT_TAG_CISCO8_LEN+14+1]), e_b64_crypt, 43, tmp, e_b64_mime, sizeof(tmp), flg_Base64_NO_FLAGS, 0));
-	cp = strchr(Buf, '+');
-	while (cp) {
+
+	cp = Buf;
+	while ((cp = strchr(cp, '+')))
 		*cp = '.';
-		cp = strchr(cp, '+');
-	}
+
 	return Buf;
 }
 
