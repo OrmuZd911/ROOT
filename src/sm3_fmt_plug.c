@@ -42,10 +42,10 @@ john_register_one(&fmt_sm3);
 #define SALT_SIZE          0
 #define SALT_ALIGN         1
 #define MIN_KEYS_PER_CRYPT 1
-#define MAX_KEYS_PER_CRYPT 32
+#define MAX_KEYS_PER_CRYPT 64
 
 #ifndef OMP_SCALE
-#define OMP_SCALE  4
+#define OMP_SCALE          32
 #endif
 
 static struct fmt_tests sm3_tests[] = {
@@ -189,7 +189,7 @@ struct fmt_main fmt_sm3 = {
 		SALT_ALIGN,
 		MIN_KEYS_PER_CRYPT,
 		MAX_KEYS_PER_CRYPT,
-		FMT_CASE | FMT_8_BIT | FMT_OMP,
+		FMT_CASE | FMT_8_BIT | FMT_OMP | FMT_OMP_BAD,
 		{ NULL},
 		{ FORMAT_TAG},
 		sm3_tests
