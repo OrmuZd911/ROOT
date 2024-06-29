@@ -22,12 +22,13 @@ john_register_one(&fmt_sm3);
 #endif
 
 #include "arch.h"
-#include "sm3.h"
 #include "misc.h"
 #include "common.h"
 #include "formats.h"
 #include "params.h"
 #include "options.h"
+
+#include "sm3.h"
 
 #define FORMAT_LABEL       "SM3"
 #define FORMAT_TAG         "$sm3$"
@@ -38,7 +39,6 @@ john_register_one(&fmt_sm3);
 #define PLAINTEXT_LENGTH   125
 #define BINARY_SIZE        sm3_hash_length
 #define BINARY_ALIGN       4
-#define CMP_SIZE           16
 #define SALT_SIZE          0
 #define SALT_ALIGN         1
 #define MIN_KEYS_PER_CRYPT 1
@@ -55,7 +55,7 @@ static struct fmt_tests sm3_tests[] = {
 };
 
 static char (*saved_key)[PLAINTEXT_LENGTH + 1];
-static uint32_t(*crypt_out)[BINARY_SIZE / sizeof(uint32_t)];
+static uint32_t (*crypt_out)[BINARY_SIZE / sizeof(uint32_t)];
 
 static void init(struct fmt_main *self)
 {
@@ -149,14 +149,14 @@ static int cmp_all(void *binary, int count)
 	int index;
 
 	for (index = 0; index < count; index++)
-		if (!memcmp(binary, crypt_out[index], CMP_SIZE))
+		if (*(uint32_t *)binary == crypt_out[index][0])
 			return 1;
 	return 0;
 }
 
 static int cmp_one(void *binary, int index)
 {
-	return !memcmp(binary, crypt_out[index], CMP_SIZE);
+	return !memcmp(binary, crypt_out[index], BINARY_SIZE);
 }
 
 static int cmp_exact(char *source, int index)
