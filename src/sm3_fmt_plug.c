@@ -1,9 +1,12 @@
-/*  SM3 format plugin
+/*
+ * SM3 format plugin
  *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted.
+ * Copyright (c) 2024 SamuraiOcto
  *
- *  There's ABSOLUTELY NO WARRANTY, express or implied.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted.
+ *
+ * There's ABSOLUTELY NO WARRANTY, express or implied.
  */
 
 #if FMT_EXTERNS_H
