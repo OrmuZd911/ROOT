@@ -219,6 +219,11 @@ Unix-like system, you can get a detached running session to update its
 session file by sending a SIGHUP to the appropriate "john" process;
 then use this option to read in and display the status.
 
+The status line printed by this option contains a subset of fields that
+are seen on the more complete status line printed on a keypress in an
+interactive session.  Please refer to the FAQ entry "What do the various
+numbers printed on the status line mean?"
+
 --catch-up=NAME			catch up with paused session
 
 Limit the session to running only until it reaches the candidates tried
