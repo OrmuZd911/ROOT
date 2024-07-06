@@ -211,7 +211,7 @@ static void init(struct fmt_main *_self)
 	if (options.target_enc == UTF_8)
 		self->params.plaintext_length = MIN(125, 3 * PLAINTEXT_LENGTH);
 
-	if (cfg_get_bool(SECTION_FORMATS, "7z", "TrustPadding", 0))
+	if (cfg_get_bool(SECTION_FORMATS, "7z", "TrustPadding", 1))
 		sevenzip_trust_padding = 1;
 }
 
