@@ -16,7 +16,6 @@ import os
 import socket
 import struct
 import sys
-import time
 
 import logging
 l = logging.getLogger("scapy.runtime")
@@ -180,6 +179,9 @@ def pcap_parser_vtp(fname):
 
 
 def pcap_parser_vrrp(fname):
+    """
+    Parse packets of the Virtual Router Redundancy Protocol (VRRP).
+    """
 
     pcap = rdpcap(fname)
 
@@ -585,7 +587,10 @@ def pcap_parser_isis(fname):
 
 
 def pcap_parser_hsrp(fname):
-    # HSRP message format: https://www.ietf.org/rfc/rfc2281.txt
+    """
+    Parse packets of the Hot Standby Router Protocol (HSRP).
+    https://www.rfc-editor.org/rfc/rfc2281
+    """
 
     pcap = rdpcap(fname)
 
@@ -1308,7 +1313,6 @@ if __name__ == "__main__":
 
     # advertise what is not handled
     sys.stderr.write("Note: This program does not have the functionality of wpapcap2john, SIPdump, eapmd5tojohn, and vncpcap2john programs which are included with JtR Jumbo.\n\n")
-    time.sleep(1)
 
     for i in range(1, len(sys.argv)):
         try:
