@@ -24,6 +24,7 @@ l.setLevel(49)
 
 try:
     from scapy.all import *
+    from scapy.layers.http import HTTPRequest
 except ImportError:
     sys.stderr.write("Please install 'scapy' package for Python, running 'pip install --user scapy' should work\n")
     sys.exit(1)
@@ -1261,49 +1262,39 @@ def pcap_parser_tsig(fname):
     f.close()
 
 
-# http://dpkt.readthedocs.io/en/latest/print_http_requests.html
-def pcap_parser_htdigest(fname):
-    f = open(fname, "rb")
-    pcap = dpkt.pcap.Reader(f)
+def pcap_parser_http_authorization(fname):
+    """
+    Parse the Authorization header of HTTP packets.
+    Supports Digest Auth and prints hashes in $response$ format.
+    Also outputs decoded Basic Auth credentials on stderr.
+    """
 
-    # For each packet in the pcap process the contents
-    for timestamp, buf in pcap:
-        # Unpack the Ethernet frame (mac src/dst, ethertype)
-        try:
-           eth = dpkt.ethernet.Ethernet(buf)
-        except:
+    pcap = rdpcap(fname)
+
+    for pkt in pcap:
+        if not HTTPRequest in pkt:
+            continue
+        auth_header = pkt["HTTPRequest"].Authorization
+        if not auth_header:
             continue
 
-        # Make sure the Ethernet data contains an IP packet
-        if eth.type == dpkt.ethernet.ETH_TYPE_IP or eth.type == dpkt.ethernet.ETH_TYPE_IP6:
-            # Now grab the data within the Ethernet frame (the IP packet)
-            ip = eth.data
+        if auth_header.startswith(b"Basic "):
+            # directly print decoded Basic Auth credentials to stderr, no cracking necessary
+            basic_auth = base64.b64decode(auth_header[6:]).decode("UTF-8")
+            sys.stderr.write("FOUND HTTP BASIC AUTH: %s\n" % basic_auth)
 
-            # Check for TCP in the transport layer
-            if isinstance(ip.data, dpkt.tcp.TCP):
-
-                # Set the TCP data
-                tcp = ip.data
-
-                # Now see if we can parse the contents as a HTTP request
-                try:
-                    request = dpkt.http.Request(tcp.data)
-                except (dpkt.dpkt.NeedData, dpkt.dpkt.UnpackError):
-                    continue
-
-                if "authorization" in request.headers:
-                    value = request.headers["authorization"]
-                    if "qop" in value and "response" in value:
-                        import urllib2
-                        items = urllib2.parse_http_list(value)
-                        opts = urllib2.parse_keqv_list(items)
-                        user = opts['Digest username']
-                        print("%s:$response$%s$%s$%s$%s$%s$%s$%s$%s$%s" %
-                                (user, opts["response"], user, opts["realm"],
-                                    request.method, opts["uri"], opts["nonce"],
-                                    opts["nc"], opts["cnonce"], opts["qop"]))
-
-    f.close()
+        if auth_header.startswith(b"Digest "):
+            try:
+                from urllib.request import parse_http_list, parse_keqv_list
+            except ImportError:
+                # Python 2
+                from urllib2 import parse_http_list, parse_keqv_list
+            items = parse_http_list(auth_header[7:].decode("UTF-8"))
+            opts = parse_keqv_list(items)
+            print("%s:$response$%s$%s$%s$%s$%s$%s$%s$%s$%s" %
+                    (opts['username'], opts["response"], opts['username'], opts["realm"],
+                        pkt["HTTPRequest"].Method.decode('ascii'), opts["uri"],
+                        opts["nonce"], opts["nc"], opts["cnonce"], opts["qop"]))
 
 
 ############################################################
@@ -1387,7 +1378,7 @@ if __name__ == "__main__":
             pcap_parser_tsig(sys.argv[i])
         except:
             pass
-        pcap_parser_htdigest(sys.argv[i])
+        pcap_parser_http_authorization(sys.argv[i])
         try:
             pcap_parser_s7(sys.argv[i])
         except:
