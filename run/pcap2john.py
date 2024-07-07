@@ -896,54 +896,43 @@ def pcap_parser_wlccp(fname):
     f.close()
 
 
-def endian(s):
-    ret = ""
-    for i in range(0, len(s), 2):
-        ret += s[i + 1] + s[i]
-    return ret
-
-
-def process_hash(uid, nonce, sha1):
-    if len(nonce) == 0:
-        return
-    uid = int(endian(uid[::-1]), 16)
-    print("%s:$dynamic_24$%s$HEX$%s" % (uid, sha1, nonce))
-
-
-def handle_gg_login105(payload, nonce):
+def pcap_parser_gadu(fname):
     """
-    GG_LOGIN105 stores uid as hex encoded ASCII. 16th byte is the number of digits in uid.
-    uid begins at 17th byte. sha1 hash is separated from last digit of uid by two bytes.
+    Parse packets of the Gadu-Gadu instant messenger.
     """
-    digits = int(payload[30:32], 16)
-    uid = payload[32:32 + 2*digits].decode("hex")
-    offset = 32 + 2*digits + 4
-    sha1 = payload[offset:offset + 40]
-    print("%s:$dynamic_24$%s$HEX$%s" % (uid, sha1, nonce))
 
-
-def pcap_parser_gadu(pcapfile):
-    try:
-        packets = rdpcap(pcapfile)
-    except:
-        sys.stderr.write("%s is not a .pcap file\n" % pcapfile)
-        return
+    pcap = rdpcap(fname)
 
     ports = [8074]
     nonce = ""
-    for pkt in packets:
-        if TCP in pkt and (pkt[TCP].dport in ports or pkt[TCP].sport in ports):
-            payload = str(pkt[TCP].payload).encode('hex')
-            if payload[:8] == '01000000':  # GG_WELCOME
-                nonce = payload[16:]
-            if payload[:8] == '31000000':  # GG_LOGIN80
-                hashtype = payload[28:30]
-                if hashtype == "02":
-                    uid = payload[16:24]
-                    sha1 = payload[30:70]
-                    process_hash(uid, nonce, sha1)
-            if payload[:8] == '83000000':  # GG_LOGIN105
-                handle_gg_login105(payload, nonce)
+    for pkt in pcap:
+        if not TCP in pkt:
+            continue
+        if not pkt[TCP].dport in ports and not pkt[TCP].sport in ports:
+            continue
+
+        payload = hexlify(bytes(pkt[TCP].payload)).decode('ascii')
+        if payload[:8] == '01000000':  # GG_WELCOME
+            nonce = payload[16:]
+        if payload[:8] == '31000000':  # GG_LOGIN80
+            hashtype = payload[28:30]
+            if hashtype == "02":
+                uid = payload[16:24]
+                sha1 = payload[30:70]
+                if len(nonce) == 0:
+                    continue
+                # swap endianness
+                uid = ''.join([uid[i:i+2] for i in range(0, len(uid), 2)][::-1])
+                uid = int(uid, 16)
+                print("%s:$dynamic_24$%s$HEX$%s" % (uid, sha1, nonce))
+        if payload[:8] == '83000000':  # GG_LOGIN105
+            # GG_LOGIN105 stores uid as hex encoded ASCII. 16th byte is the number of digits in uid.
+            # uid begins at 17th byte. sha1 hash is separated from last digit of uid by two bytes.
+            digits = int(payload[30:32], 16)
+            uid = payload[32:32 + 2*digits].decode("hex")
+            offset = 32 + 2*digits + 4
+            sha1 = payload[offset:offset + 40]
+            print("%s:$dynamic_24$%s$HEX$%s" % (uid, sha1, nonce))
 
 
 def pcap_parser_eigrp(fname):
