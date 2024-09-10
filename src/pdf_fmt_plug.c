@@ -1,11 +1,13 @@
-/* PDF cracker patch for JtR. Hacked together during Monsoon of 2012 by
+/*
+ * PDF cracker patch for JtR. Hacked together during Monsoon of 2012 by
  * Dhiru Kholia <dhiru.kholia at gmail.com>.
  *
- * This software is Copyright (c) 2012, Dhiru Kholia <dhiru.kholia at gmail.com>
+ * This software is
+ * Copyright (c) 2012, Dhiru Kholia <dhiru.kholia at gmail.com>
+ * Copyright (c) 2013, Shane Quigley
+ * Copyright (c) 2024, magnum
  *
- * Uses code from Sumatra PDF and MuPDF which are under GPL.
- *
- * Edited by Shane Quigley in 2013.
+ * Uses code from pdfcrack, Sumatra PDF and MuPDF which are under GPL.
  */
 
 #if FMT_EXTERNS_H
@@ -31,6 +33,8 @@ john_register_one(&fmt_pdf);
 #include "rc4.h"
 #include "pdfcrack_md5.h"
 #include "loader.h"
+#include "options.h"
+#include "logger.h"
 
 #define FORMAT_LABEL        "PDF"
 #define FORMAT_NAME         ""
@@ -75,6 +79,10 @@ static struct custom_salt {
 	int length_ue;
 	int length_oe;
 } *crypt_out;
+
+#define MAX_KEY_SIZE        256
+#define MAX_U_SIZE          sizeof(crypt_out->u)
+#define MAX_O_SIZE          sizeof(crypt_out->o)
 
 static struct fmt_tests pdf_tests[] = {
 	{"$pdf$4*4*128*-1028*1*16*e03460febe17a048b0adc7f7631bcc56*32*3456205208ad52066d5604018d498a6400000000000000000000000000000000*32*6d598152b22f8fa8085b19a866dce1317f645788a065a74831588a739a579ac4", "openwall"},
@@ -140,7 +148,7 @@ static int valid(char *ciphertext, struct fmt_main *self)
 		goto err;
 	if (!isdec(p)) goto err;
 	res = atoi(p);
-	if (res > 256)
+	if (res > MAX_KEY_SIZE)
 		goto err;
 	if ((p = strtokm(NULL, "*")) == NULL)	/* P */
 		goto err;
@@ -165,7 +173,7 @@ static int valid(char *ciphertext, struct fmt_main *self)
 		goto err;
 	if (!isdec(p)) goto err;
 	res = atoi(p);
-	if (res > 127)
+	if (res > MAX_U_SIZE)
 		goto err;
 	if ((p = strtokm(NULL, "*")) == NULL)	/* u */
 		goto err;
@@ -177,7 +185,7 @@ static int valid(char *ciphertext, struct fmt_main *self)
 		goto err;
 	if (!isdec(p)) goto err;
 	res = atoi(p);
-	if (res > 127)
+	if (res > MAX_O_SIZE)
 		goto err;
 	if ((p = strtokm(NULL, "*")) == NULL)	/* o */
 		goto err;
@@ -257,7 +265,7 @@ error:
 	return 0;
 }
 
-char * convert_old_to_new(char ciphertext[])
+char* convert_old_to_new(char ciphertext[])
 {
 	char *ctcopy = xstrdup(ciphertext);
 	char *keeptr = ctcopy;
@@ -425,13 +433,20 @@ pdf_compute_encryption_key(unsigned char *password, int pwlen, unsigned char *ke
         /* Step 8 (revision 3 or greater) - do some voodoo 50 times */
         if (crypt_out->R >= 3)
         {
-                /* for (i = 0; i < 50; i++)
-                {
-                        MD5_Init(&md5);
-                        MD5_Update(&md5, buf, n);
-                        MD5_Final(buf, &md5);
-                } */
-                md5_50(buf);
+	        switch(crypt_out->length) {
+	        case 128:
+		        md5x50_128(buf);
+		        break;
+	        case 40:
+		        md5x50_40(buf);
+		        break;
+	        default:
+		        for (int i = 0; i < 50; i++) {
+			        MD5_Init(&md5);
+			        MD5_Update(&md5, buf, n);
+			        MD5_Final(buf, &md5);
+		        }
+	        }
         }
         /* Step 9 - the key is the first 'n' bytes of the result */
         memcpy(key, buf, n);
@@ -548,26 +563,24 @@ pdf_compute_hardened_hash_r6(unsigned char *password, int pwlen, unsigned char s
 
 static void pdf_compute_user_password(unsigned char *password,  unsigned char *output)
 {
-
 	int pwlen = strlen((char*)password);
-	unsigned char key[128];
+	unsigned char key[MAX_KEY_SIZE / 8];
+	int n = crypt_out->length / 8;
 
 	if (crypt_out->R == 2) {
 		RC4_KEY arc4;
-		int n;
-		n = crypt_out->length / 8;
+
 		pdf_compute_encryption_key(password, pwlen, key);
 		RC4_set_key(&arc4, n, key);
 		RC4(&arc4, 32, padding, output);
 	}
-
-	if (crypt_out->R == 3 || crypt_out->R == 4) {
+	else if (crypt_out->R == 3 || crypt_out->R == 4) {
 		unsigned char xor[32];
 		unsigned char digest[16];
 		MD5_CTX md5;
 		RC4_KEY arc4;
-		int i, x, n;
-		n = crypt_out->length / 8;
+		int i, x;
+
 		pdf_compute_encryption_key(password, pwlen, key);
 		MD5_Init(&md5);
 		MD5_Update(&md5, (char*)padding, 32);
@@ -581,7 +594,7 @@ static void pdf_compute_user_password(unsigned char *password,  unsigned char *o
 			RC4_set_key(&arc4, n, xor);
 			RC4(&arc4, 16, output, output);
 		}
-		memcpy(output + 16, padding, 16);
+		//memcpy(output + 16, padding, 16);  /* pointless - we only test 16 bytes of it */
 	}
 	if (crypt_out->R == 5) {
 		pdf_compute_encryption_key_r5(password, pwlen, 0, output);
@@ -590,6 +603,20 @@ static void pdf_compute_user_password(unsigned char *password,  unsigned char *o
 	/* SumatraPDF: support crypt version 5 revision 6 */
 	if (crypt_out->R == 6)
 		pdf_compute_hardened_hash_r6(password, pwlen, crypt_out->u + 32,  NULL, output);
+
+	if (!bench_or_test_running && crypt_out->length == 40 && !memcmp(output, crypt_out->u, 16)) {
+		char h_key[2 * 5 + 1], *p;
+		int i;
+
+		p = &h_key[0];
+		for (i = 0; i < 2 * n; i++)
+			*p++ = itoa16[key[i >> 1] >> (4 * ((i & 0x1) ^ 1)) & 0xf];
+		*p = 0;
+
+		log_event("+ RC4 key: %s", h_key);
+		if (options.verbosity > VERB_DEFAULT)
+			fprintf(stderr, "+ RC4 key: %s\n", h_key);
+	}
 }
 
 static int crypt_all(int *pcount, struct db_salt *salt)

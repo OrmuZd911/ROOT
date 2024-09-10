@@ -22,8 +22,8 @@
 
 #include <stdint.h>
 
-void md5(const uint8_t * msg, const unsigned int msgLen, uint8_t * digest);
 
-void md5_50(uint8_t * msg);
+extern void md5x50_40(uint8_t * msg);
+extern void md5x50_128(uint8_t * msg);
 
 #endif /** _MD5_H_ */
