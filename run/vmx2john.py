@@ -23,7 +23,7 @@ else:
 
 
 def process_file(target):
-    ks_re = '.+phrase/(.*?)/pass2key=(.*?):cipher=(.*?):rounds=(.*?):salt=(.*?),(.*?),(.*?)\)'
+    ks_re = r'.+phrase/(.*?)/pass2key=(.*?):cipher=(.*?):rounds=(.*?):salt=(.*?),(.*?),(.*?)\)'
 
     name = "Unknown"
     keysafe = None
