@@ -72,8 +72,8 @@ if __name__ == '__main__':
     if len(sys.argv) < 2:
         sys.stderr.write("Usage: %s <.aes or .dash files from Dashlane for Windows Desktop / macOS>\n" % sys.argv[0])
         sys.stderr.write("\nNote: This only works with data from Windows and macOS Desktop version of Dashlane.\n")
-        sys.stderr.write("\nThe required .aes files can be found inside %AppData%\Dashlane\profiles directory tree on Windows.\n")
-        sys.stderr.write("\nThe required .aes files can be found inside ~/Library/Application\ Support/Dashlane/profiles/ directory tree on macOS.\n")
+        sys.stderr.write("\nThe required .aes files can be found inside %AppData%\\Dashlane\\profiles directory tree on Windows.\n")
+        sys.stderr.write("\nThe required .aes files can be found inside ~/Library/Application\\ Support/Dashlane/profiles/ directory tree on macOS.\n")
         sys.exit(1)
 
     for i in range(1, len(sys.argv)):

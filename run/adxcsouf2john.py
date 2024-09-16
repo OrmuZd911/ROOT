@@ -95,7 +95,7 @@ def process_file(filename):
         return process_other_file(filename)
 
     # find (username hash) pairs
-    matches = re.findall(b'([a-zA-Z0-9_-]{3,9})\ (\d{8})', data)
+    matches = re.findall(rb'([a-zA-Z0-9_-]{3,9})\ (\d{8})', data)
 
     for items in matches:
         try:
