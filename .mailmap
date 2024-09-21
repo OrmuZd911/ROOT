@@ -1,6 +1,6 @@
 #
 # This ensures 'git shortlog' understands "different" committers as being
-# the same person
+# the same  person
 #
 # Proper Name <commit@email.xx>
 # Proper Name <proper@email.xx> <commit@email.xx>
