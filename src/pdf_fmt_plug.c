@@ -433,6 +433,7 @@ pdf_compute_encryption_key(unsigned char *password, int pwlen, unsigned char *ke
         /* Step 8 (revision 3 or greater) - do some voodoo 50 times */
         if (crypt_out->R >= 3)
         {
+		int i;
 	        switch(crypt_out->length) {
 	        case 128:
 		        md5x50_128(buf);
@@ -441,7 +442,7 @@ pdf_compute_encryption_key(unsigned char *password, int pwlen, unsigned char *ke
 		        md5x50_40(buf);
 		        break;
 	        default:
-		        for (int i = 0; i < 50; i++) {
+		        for (i = 0; i < 50; i++) {
 			        MD5_Init(&md5);
 			        MD5_Update(&md5, buf, n);
 			        MD5_Final(buf, &md5);
