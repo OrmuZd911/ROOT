@@ -41,6 +41,7 @@
 #include "../misc.h"
 #include "../memory.h"
 #include "../common.h"
+#include "../unicode.h"
 
 #include "../sha2.h"
 
@@ -2439,6 +2440,9 @@ void test_sha2_c() {
 	end_test();
 }
 
+/* Tests for unicode.c */
+#include "test_valid_utf8.c"
+
 int main() {
 	start_of_run = clock();
 
@@ -2492,6 +2496,9 @@ int main() {
 
 	set_unit_test_source("sha2.c");
 	test_sha2_c();
+
+	set_unit_test_source("unicode.c");
+	test_valid_utf8();
 
 	// perform dump listing of all processed functions.
 	dump_stats();
