@@ -803,7 +803,10 @@ testfiles:
 ###############################################################################
 
 UNIT_TEST_OBJS = \
-	tests/unit-tests.o tests/misc.o tests/common.o tests/memory.o tests/sha2.o
+	tests/unit-tests.o tests/misc.o tests/common.o tests/memory.o tests/sha2.o tests/unicode.o
+
+UNIT_TEST_INCLUDED_PIECES = \
+	tests/test_valid_utf8.c
 
 tests/unit-tests.o:	tests/unit-tests.c common.h memory.h misc.h
 	$(CC) -o tests/unit-tests.o $(CFLAGS) -DFORCE_GENERIC_SHA2 -D_JOHN_MISC_NO_LOG  tests/unit-tests.c
@@ -820,10 +823,13 @@ tests/common.o:	common.c arch.h common.h memory.h os.h os-autoconf.h autoconfig.
 tests/memory.o:	memory.c arch.h misc.h jumbo.h autoconfig.h memory.h common.h johnswap.h os.h os-autoconf.h
 	$(CC) -o tests/memory.o $(CFLAGS) -D_JOHN_MISC_NO_LOG  memory.c
 
+tests/unicode.o:	unicode.o # just to have all the same deps
+	$(CC) -o tests/unicode.o $(CFLAGS) -DUNICODE_NO_OPTIONS -DNOT_JOHN  unicode.c
+
 # keep the 'easy name' build target of unit-tests   The 'real' target is ../run/unit-tests[.exe]
 unit-tests:	../run/unit-tests@EXE_EXT@
 
-../run/unit-tests@EXE_EXT@:	$(UNIT_TEST_OBJS)
+../run/unit-tests@EXE_EXT@:	$(UNIT_TEST_OBJS) $(UNIT_TEST_INCLUDED_PIECES)
 	$(LD) $(UNIT_TEST_OBJS) $(LDFLAGS) @OPENSSL_LIBS@ -o $@
 	@ echo "Now Running the Unit Tests"
 	@ ${POSSIBLE_WINE_MSG}
