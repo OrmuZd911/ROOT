@@ -235,6 +235,51 @@ extern void truncate_utf8(UTF8 *string, int len);
  * sequences (plus one and not counting ASCII), so it can be used as a
  * quality measure. A low number might be a false positive, a high
  * number most probably isn't.
+ *
+ *
+ * Related info about UTF-8
+ *
+ * Valid UTF-8 sequences of bytes (1-4 bytes long):
+ *
+ * 00..7F
+ *
+ * C2..DF  80..BF
+ *
+ *   E0    A0..BF  80..BF
+ *   ED    80..9F  80..BF
+ *   Ex    80..BF  80..BF  where Ex does not include E0 and ED
+ *
+ *   F0    90..BF  80..BF  80..BF
+ *   F4    80..8F  80..BF  80..BF  notice 8F as upper bound in the second byte
+ * F1..F3  80..BF  80..BF  80..BF
+ *
+ * (X..Y denotes range from X to Y inclusive. X and Y are byte
+ * values written in hex.)
+ *
+ * Incomplete sequences are invalid.
+ *
+ * Range 80..BF is for trailing bytes (also called continuation
+ * bytes). It is not a valid starting byte. Adjacent values C0 and C1
+ * could be considered starting 2-bytes sequences but they are not
+ * valid in UTF-8.
+ *
+ * Each of E0,ED,F0,F4 starting bytes use a sub-range for trailing
+ * byte at the second position. E0/ED use different halves of the
+ * range for the second byte. F0/F4 allow the second byte in other
+ * proportions (48:16), not overlapping too.
+ *
+ * Valid UTF-8 text cannot include C0,C1,F5..FF bytes at any position.
+ * 80..BF are invalid at starting position.
+ * 00..7F,C2..F4 are invalid at any trailing position (actually they
+ * invalidate previous char while new starting byte itself could be a
+ * part of a valid char, but even then the whole string would be
+ * invalid for purposes of valid_utf8()).
+ *
+ * See also  https://en.wikipedia.org/wiki/UTF-8#Codepage_layout
+ *
+ * Sequences for unallocated, unassigned, reserved (including
+ * noncharacters) code points are considered valid. See here:
+ * https://en.wikipedia.org/wiki/Universal_Character_Set_characters#Noncharacters
  */
 extern int valid_utf8(const UTF8 *source);
 
