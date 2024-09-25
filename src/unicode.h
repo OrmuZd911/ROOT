@@ -232,8 +232,9 @@ extern void truncate_utf8(UTF8 *string, int len);
  * returns > 1 if data is valid and in fact contains UTF-8 sequences
  *
  * Actually in the last case, the return is the number of proper UTF-8
- * sequences, so it can be used as a quality measure. A low number might be
- * a false positive, a high number most probably isn't.
+ * sequences (plus one and not counting ASCII), so it can be used as a
+ * quality measure. A low number might be a false positive, a high
+ * number most probably isn't.
  */
 extern int valid_utf8(const UTF8 *source);
 
