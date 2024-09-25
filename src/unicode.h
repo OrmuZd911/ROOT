@@ -34,7 +34,10 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#ifndef UNICODE_NO_OPTIONS
 #include "options.h"
+#endif
+
 #include "common.h"
 #include "jumbo.h"
 
@@ -318,10 +321,16 @@ extern UTF8 CP_isUpper[0x100];
 extern UTF8 CP_isSeparator[0x100];
 extern UTF8 CP_isDigit[0x100];
 
+#ifndef UNICODE_NO_OPTIONS
 /* These are encoding-aware but not LC_CTYPE */
 #define enc_islower(c) (options.internal_cp == ENC_RAW ? (c >= 'a' && c <= 'z') : CP_isLower[ARCH_INDEX(c)])
 #define enc_isupper(c) (options.internal_cp == ENC_RAW ? (c >= 'A' && c <= 'Z') : CP_isUpper[ARCH_INDEX(c)])
 #define enc_isdigit(c) (options.internal_cp == ENC_RAW ? (c >= '0' && c <= '9') : CP_isDigit[ARCH_INDEX(c)])
+#else
+#define enc_islower(c) (c >= 'a' && c <= 'z')
+#define enc_isupper(c) (c >= 'A' && c <= 'Z')
+#define enc_isdigit(c) (c >= '0' && c <= '9')
+#endif
 #define enc_tolower(c) (char)CP_down[ARCH_INDEX(c)]
 #define enc_toupper(c) (char)CP_up[ARCH_INDEX(c)]
 
