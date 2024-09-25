@@ -534,7 +534,7 @@ inline size_t strlen_any(const void *source)
 int valid_utf8(const UTF8 *source)
 {
 	UTF8 a;
-	int length, ret = 1;
+	int ret = 1;
 	const UTF8 *srcptr;
 
 	while (*source) {
@@ -546,35 +546,34 @@ int valid_utf8(const UTF8 *source)
 		if (*source < 0xC2)
 			return 0;
 
-		length = opt_trailingBytesUTF8[*source & 0x3f] + 1;
 		srcptr = source;
 
-		switch (length) {
-		default:
-			return 0;
-			/* Everything else falls through when valid */
-			/* But no fall-through in inner switch statements. */
-		case 4:
-			if ((a = (*++srcptr)) < 0x80 || a > 0xBF) return 0;
+		if (*source >= 0xE0) { /* 3+ bytes */
+			if (*source >= 0xF0) { /* 4+ bytes */
 
-			if (*source > 0xF4) return 0;
+				if ((a = (*++srcptr)) < 0x80 || a > 0xBF) return 0;
 
-			switch (*source) {
-			case 0xF0: if (a < 0x90) return 0; break;
-			case 0xF4: if (a > 0x8F) return 0;
-			}
-		case 3:
+				if (*source > 0xF4) return 0;
+
+				switch (*source) {
+				case 0xF0: if (a < 0x90) return 0; break;
+				case 0xF4: if (a > 0x8F) return 0;
+				}
+
+			} /* end of specific handling for 4+ bytes */
+
 			if ((a = (*++srcptr)) < 0x80 || a > 0xBF) return 0;
 
 			switch (*source) {
 			case 0xE0: if (a < 0xA0) return 0; break;
 			case 0xED: if (a > 0x9F) return 0;
 			}
-		case 2:
-			if ((a = (*++srcptr)) < 0x80 || a > 0xBF) return 0;
 		}
+		/* 2 bytes or "fall-through" with handled beginning of 3-4 bytes */
 
-		source += length;
+		if ((a = (*++srcptr)) < 0x80 || a > 0xBF) return 0;
+
+		source = srcptr + 1;
 		ret++;
 	}
 	return ret;
