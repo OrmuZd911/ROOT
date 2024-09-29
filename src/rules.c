@@ -611,7 +611,7 @@ int rules_init_stack(char *ruleset, rule_stack *stack_ctx,
 			log_event("- No stacked rules");
 	}
 
-	rules_stacked_after = rule_count && (options.flags & (FLG_RULES_CHK | FLG_SINGLE_CHK));
+	rules_stacked_after = rule_count && (options.flags & (FLG_RULES_CHK | FLG_SINGLE_CHK | FLG_BATCH_CHK));
 
 	return rule_count;
 }
@@ -639,7 +639,7 @@ void rules_init(struct db_main *db, int max_length)
 	}
 	rules_init_length(max_length);
 
-	rules_stacked_after = (options.flags & (FLG_RULES_CHK | FLG_SINGLE_CHK)) && (options.flags & FLG_RULES_STACK_CHK);
+	rules_stacked_after = (options.flags & (FLG_RULES_CHK | FLG_SINGLE_CHK | FLG_BATCH_CHK)) && (options.flags & FLG_RULES_STACK_CHK);
 }
 
 char *rules_reject(char *rule, int split, char *last, struct db_main *db)
@@ -1868,7 +1868,7 @@ char *rules_process_stack(char *key, rule_stack *ctx)
 	if ((word = rules_apply(key, ctx->rule->data, -1, last)))
 		last = word;
 
-	rules_stacked_after = !!(options.flags & (FLG_RULES_CHK | FLG_SINGLE_CHK));
+	rules_stacked_after = !!(options.flags & (FLG_RULES_CHK | FLG_SINGLE_CHK | FLG_BATCH_CHK));
 
 	return word;
 }
@@ -1908,7 +1908,7 @@ char *rules_process_stack_all(char *key, rule_stack *ctx)
 		}
 	}
 
-	rules_stacked_after = !!(options.flags & (FLG_RULES_CHK | FLG_SINGLE_CHK));
+	rules_stacked_after = !!(options.flags & (FLG_RULES_CHK | FLG_SINGLE_CHK | FLG_BATCH_CHK));
 
 	if (!stack_rules_mute && options.verbosity <= VERB_DEFAULT) {
 		stack_rules_mute = 1;
